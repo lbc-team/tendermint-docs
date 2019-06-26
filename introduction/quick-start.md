@@ -5,9 +5,9 @@
 This is a quick start guide. If you have a vague idea about how Tendermint
 works and want to get started right away, continue.
 
-## Install
+## 安装
 
-### Quick Install
+### 快速安装
 
 To quickly get Tendermint installed on a fresh
 Ubuntu 16.04 machine, use [this script](https://git.io/fFfOR).
@@ -21,11 +21,11 @@ source ~/.profile
 
 The script is also used to facilitate cluster deployment below.
 
-### Manual Install
+### 手动安装
 
 For manual installation, see the [install instructions](install.md)
 
-## Initialization
+## 初始化
 
 Running:
 
@@ -50,7 +50,7 @@ config.toml  genesis.json  node_key.json  priv_validator.json
 For a single, local node, no further configuration is required.
 Configuring a cluster is covered further below.
 
-## Local Node
+## 本地节点
 
 Start tendermint with a simple in-process application:
 
@@ -71,7 +71,7 @@ Check the status with:
 curl -s localhost:26657/status
 ```
 
-### Sending Transactions
+### 发送交易
 
 With the kvstore app running, we can send transactions:
 
@@ -99,7 +99,7 @@ curl -s 'localhost:26657/abci_query?data="name"'
 
 where the value is returned in hex.
 
-## Cluster of Nodes
+## 节点集群
 
 First create four Ubuntu cloud machines. The following was tested on Digital
 Ocean Ubuntu 16.04 x64 (3GB/1CPU, 20GB SSD). We'll refer to their respective IP

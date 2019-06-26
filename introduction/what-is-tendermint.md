@@ -36,7 +36,7 @@ development environment is right for them.
 Tendermint is designed to be easy-to-use, simple-to-understand, highly
 performant, and useful for a wide variety of distributed applications.
 
-## Tendermint vs. X
+## Tendermint 和其他技术对比
 
 Tendermint is broadly similar to two classes of software. The first
 class consists of distributed key-value stores, like Zookeeper, etcd,
@@ -113,7 +113,7 @@ additional features for a name-registry, permissions, and native
 contracts, and an alternative blockchain API. It uses Tendermint as its
 consensus engine, and provides a particular application state.
 
-## ABCI Overview
+## ABCI 概述
 
 The [Application BlockChain Interface
 (ABCI)](https://github.com/tendermint/tendermint/tree/develop/abci)
