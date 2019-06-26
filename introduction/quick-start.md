@@ -1,6 +1,6 @@
-# Quick Start
+# Tendermint 快速入门
 
-## Overview
+## 概述
 
 This is a quick start guide. If you have a vague idea about how Tendermint
 works and want to get started right away, continue.

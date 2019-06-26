@@ -1,4 +1,4 @@
-# Install Tendermint
+# 安装 Tendermint
 
 The fastest and easiest way to install the `tendermint` binary
 is to run [this script](https://github.com/tendermint/tendermint/blob/develop/scripts/install/install_tendermint_ubuntu.sh) on
@@ -7,16 +7,16 @@ or [this script](https://github.com/tendermint/tendermint/blob/develop/scripts/i
 on a fresh FreeBSD instance. Read the comments / instructions carefully (i.e., reset your terminal after running the script,
 make sure you are okay with the network connections being made).
 
-## From Binary
+## 使用二进制安装
 
 To download pre-built binaries, see the [releases page](https://github.com/tendermint/tendermint/releases).
 
-## From Source
+## 从源码安装
 
 You'll need `go` [installed](https://golang.org/doc/install) and the required
 [environment variables set](https://github.com/tendermint/tendermint/wiki/Setting-GOPATH)
 
-### Get Source Code
+### 获取源码
 
 ```
 mkdir -p $GOPATH/src/github.com/tendermint
@@ -25,14 +25,14 @@ git clone https://github.com/tendermint/tendermint.git
 cd tendermint
 ```
 
-### Get Tools & Dependencies
+### 安装工具及依赖
 
 ```
 make get_tools
 make get_vendor_deps
 ```
 
-### Compile
+### 编译
 
 ```
 make install
@@ -48,7 +48,7 @@ to put the binary in `./build`.
 
 The latest `tendermint version` is now installed.
 
-## Run
+## 运行
 
 To start a one-node blockchain with a simple in-process application:
 
@@ -57,7 +57,7 @@ tendermint init
 tendermint node --proxy_app=kvstore
 ```
 
-## Reinstall
+## 重新安装
 
 If you already have Tendermint installed, and you make updates, simply
 

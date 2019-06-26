@@ -1,4 +1,4 @@
-# What is Tendermint?
+# 什么是Tendermint?
 
 Tendermint is software for securely and consistently replicating an
 application on many machines. By securely, we mean that Tendermint works

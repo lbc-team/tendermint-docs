@@ -1,18 +1,18 @@
 module.exports = {
-  title: "Tendermint Documentation",
-  description: "Documentation for Tendermint Core.",
-  ga: "UA-51029217-1",
+  title: "Tendermint 中文文档",
+  description: " Tendermint Core 开发手册",
+  ga: "",
   dest: "./dist/docs",
-  base: "/docs/",
+  base: "/docs/tendermint/",
   markdown: {
     lineNumbers: true
   },
   themeConfig: {
-    repo: "tendermint/tendermint",
+    repo: "lbc-team/tendermint-docs",
     editLinks: true,
     docsDir: "docs",
-    docsBranch: "develop",
-    editLinkText: 'Edit this page on Github',
+    docsBranch: "lbc",
+    editLinkText: '帮助完善文档',
     lastUpdated: true,
     algolia: {
       apiKey: '59f0e2deb984aa9cdf2b3a5fd24ac501',
@@ -20,22 +20,23 @@ module.exports = {
       debug: false
     },
     nav: [
-      { text: "Back to Tendermint", link: "https://tendermint.com" },
+      { text: "首页", link: "https://learnblockchain.cn" },
+      { text: "区块链文档中心", link: "https://learnblockchain.cn/docs/" },
+      { text: "En", link: "https://tendermint.com/docs/" },
       { text: "RPC", link: "https://tendermint.com/rpc/" }
     ],
     sidebar: [
       {
-        title: "Introduction",
+        title: "Tendermint 概述",
         collapsable: false,
         children: [
-          "/introduction/",
           "/introduction/quick-start",
           "/introduction/install",
           "/introduction/what-is-tendermint"
         ]
       },
       {
-        title: "Apps",
+        title: "应用开发",
         collapsable: false,
         children: [
           "/app-dev/getting-started",
@@ -68,7 +69,7 @@ module.exports = {
         ]
       },
       {
-        title: "Networks",
+        title: "网络",
         collapsable: false,
         children: [
           "/networks/",
@@ -77,7 +78,7 @@ module.exports = {
         ]
       },
       {
-        title: "Tools",
+        title: "工具",
         collapsable: false,
         children:  [
           "/tools/",
@@ -87,7 +88,7 @@ module.exports = {
         ]
       },
       {
-        title: "Tendermint Spec",
+        title: "Tendermint 规范",
         collapsable: true,
         children: [
           "/spec/",
@@ -119,7 +120,7 @@ module.exports = {
 	]
       },
       {
-        title: "ABCI Spec",
+        title: "ABCI 规范",
         collapsable: false,
         children: [
           "/spec/abci/",
