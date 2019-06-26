@@ -1,0 +1,3 @@
+vuepress build .
+cd dist/docs
+python -m SimpleHTTPServer 8090
