@@ -3,7 +3,7 @@ module.exports = {
   description: " Tendermint Core 开发手册",
   ga: "",
   dest: "./dist/docs",
-  base: "/",
+  base: "/docs/tendermint/",
   markdown: {
     lineNumbers: true
   },
