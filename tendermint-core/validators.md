@@ -1,39 +1,22 @@
-# Validators
+# 验证者
 
-Validators are responsible for committing new blocks in the blockchain.
-These validators participate in the consensus protocol by broadcasting
-_votes_ which contain cryptographic signatures signed by each
-validator's private key.
+验证者负责在区块链中提交新块。这些验证者通过广播 _votes_ 参与共识协议，其中包含由每个验证者的私钥签名的加密签名。
 
-Some Proof-of-Stake consensus algorithms aim to create a "completely"
-decentralized system where all stakeholders (even those who are not
-always available online) participate in the committing of blocks.
-Tendermint has a different approach to block creation. Validators are
-expected to be online, and the set of validators is permissioned/curated
-by some external process. Proof-of-stake is not required, but can be
-implemented on top of Tendermint consensus. That is, validators may be
-required to post collateral on-chain, off-chain, or may not be required
-to post any collateral at all.
+一些权益证明共识算法旨在创建一个“完全”分布式系统，让所有利益相关者（甚至那些不总是在线的）都参与提交块。
+Tendermint 有一个不同的方法来创建块。验证者应该是在线的，并且验证者集由一些外部流程许可/管理。不需要权益证明，但可以在 Tendermint 协商一致的基础上执行。也就是说，验证者可能需要在链上、链外发布抵押品，或者根本不需要发布任何抵押品。
 
-Validators have a cryptographic key-pair and an associated amount of
-"voting power". Voting power need not be the same.
+验证者有一个加密密钥对和相应数量的“投票权”。投票权不必相同。
 
-## Becoming a Validator
+## 成为一个验证者
 
-There are two ways to become validator.
+有两种方法可以成为验证者。
 
-1.  They can be pre-established in the [genesis state](./using-tendermint.md#genesis)
-2.  The ABCI app responds to the EndBlock message with changes to the
-    existing validator set.
+1.  它们可以预先建立在[创世纪状态](./using-tendermint.md#genesis)
+2.  ABCI 应用程序通过更改现有验证者集来响应 EndBlock 消息。
 
-## Committing a Block
+## 提交一个块
 
-_+2/3 is short for "more than 2/3"_
+_+2/3 是 “大于2/3”的缩写_
 
-A block is committed when +2/3 of the validator set sign [precommit
-votes](../spec/blockchain/blockchain.md#vote) for that block at the same `round`.
-The +2/3 set of precommit votes is called a
-[_commit_](../spec/blockchain/blockchain.md#commit). While any +2/3 set of
-precommits for the same block at the same height&round can serve as
-validation, the canonical commit is included in the next block (see
-[LastCommit](../spec/blockchain/blockchain.md#lastcommit)).
+在该块同一 `round` 上 +2/3 的验证者s设置签名[预提交投票](../spec/blockchain/blockchain.md#vote)时，将提交一个块。
++2/3 预提交投票组称为[_提交_](../spec/blockchain/blockchain.md#commit)。虽然在相同的高度和轮上为相同的块使用任意 +2/3 组预提交可以作为验证，但是在下一个块中包含公认的提交（请参见 [LastCommit](../spec/blockchain/blockchain.md#lastcommit)）。

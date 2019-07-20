@@ -1,19 +1,17 @@
-# Mempool
+# 内存池
 
-## Transaction ordering
+## 交易排序
 
-Currently, there's no ordering of transactions other than the order they've
-arrived (via RPC or from other nodes).
+目前，除了交易到达的顺序(通过 RPC 或来自其他节点)之外，没有其他交易的顺序。
 
-So the only way to specify the order is to send them to a single node.
+因此，指定顺序的唯一方法是将它们发送到单个节点。
 
 valA:
   - tx1
   - tx2
   - tx3
 
-If the transactions are split up across different nodes, there's no way to
-ensure they are processed in the expected order.
+如果交易被分割到不同的节点，则无法确保按照预期的顺序处理它们。
 
 valA:
   - tx1
@@ -22,20 +20,16 @@ valA:
 valB:
   - tx3
 
-If valB is the proposer, the order might be:
+如果 valB 是提议人，排序可能是:
 
   - tx3
   - tx1
   - tx2
 
-If valA is the proposer, the order might be:
+如果 valA 是提议人，排序可能是:
 
   - tx1
   - tx2
   - tx3
 
-That said, if the transactions contain some internal value, like an
-order/nonce/sequence number, the application can reject transactions that are
-out of order. So if a node receives tx3, then tx1, it can reject tx3 and then
-accept tx1. The sender can then retry sending tx3, which should probably be
-rejected until the node has seen tx2.
+也就是说，如果交易包含一些内部值，比如 order/nonce/sequence number，应用程序可以拒绝无序的交易。所以如果一个节点接收到 tx3，然后是 tx1，它可以拒绝tx3，然后接受 tx1。然后发送方可以重试发送 tx3，在节点看到 tx2 之前，应该拒绝发送 tx3。

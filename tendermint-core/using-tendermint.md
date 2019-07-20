@@ -1,62 +1,46 @@
-# Using Tendermint
+# 使用 Tendermint
 
-This is a guide to using the `tendermint` program from the command line.
-It assumes only that you have the `tendermint` binary installed and have
-some rudimentary idea of what Tendermint and ABCI are.
+这是使用命令行中的 `tendermint` 程序的指南。
+它只假设您已经安装了 `tendermint` 二进制文件，并且对 Tendermint 和 ABCI 有一些基本的概念。
 
-You can see the help menu with `tendermint --help`, and the version
-number with `tendermint version`.
+您可以看到帮助菜单上的 `tendermint --help`，以及版本号上的 `tendermint version`。
 
-## Directory Root
+## 根目录
 
-The default directory for blockchain data is `~/.tendermint`. Override
-this by setting the `TMHOME` environment variable.
+区块链数据的默认目录是 `~/.tendermint`。通过设置 `TMHOME` 环境变量来覆盖它。
 
-## Initialize
+## 初始化
 
-Initialize the root directory by running:
+运行以下命令初始化根目录:
 
 ```
 tendermint init
 ```
 
-This will create a new private key (`priv_validator.json`), and a
-genesis file (`genesis.json`) containing the associated public key, in
-`$TMHOME/config`. This is all that's necessary to run a local testnet
-with one validator.
+这将在 `$TMHOME/config` 中创建一个新的私钥 (`priv_validator.json`)和一个包含关联公钥的创世文件(`genesis.json`)。这就是运行带有一个验证者的本地测试网络所需要的全部内容。
 
-For more elaborate initialization, see the tesnet command:
+有关更详细的初始化，请参见 tesnet 命令:
 
 ```
 tendermint testnet --help
 ```
 
-### Genesis
+### 创世
 
-The `genesis.json` file in `$TMHOME/config/` defines the initial
-TendermintCore state upon genesis of the blockchain ([see
-definition](https://github.com/tendermint/tendermint/blob/master/types/genesis.go)).
+`$TMHOME/config/` 中的 `genesis.json` 文件定义了区块链生成时的初始 TendermintCore 状态([参见定义](https://github.com/tendermint/tendermint/blob/master/types/genesis.go))。
 
-#### Fields
+#### 字段
 
-- `genesis_time`: Official time of blockchain start.
-- `chain_id`: ID of the blockchain. This must be unique for
-  every blockchain. If your testnet blockchains do not have unique
-  chain IDs, you will have a bad time. The ChainID must be less than 50 symbols.
-- `validators`: List of initial validators. Note this may be overridden entirely by the
-  application, and may be left empty to make explicit that the
-  application will initialize the validator set with ResponseInitChain.
-  - `pub_key`: The first element specifies the `pub_key` type. 1
-  == Ed25519. The second element are the pubkey bytes.
-  - `power`: The validator's voting power.
-  - `name`: Name of the validator (optional).
-- `app_hash`: The expected application hash (as returned by the
-  `ResponseInfo` ABCI message) upon genesis. If the app's hash does
-  not match, Tendermint will panic.
-- `app_state`: The application state (e.g. initial distribution
-  of tokens).
+- `genesis_time`: 区块链正式开始时间。
+- `chain_id`: 区块链的 ID。对于每个区块链，这必须是惟一的。如果您的测试网络区块链没有惟一的链 ID，那么您的日子就不好过了。链 ID 必须小于50个符号。
+- `validators`: 初始验证者列表。注意，这可能被应用程序完全覆盖，并且可能被保留为空，以明确应用程序将使用 ResponseInitChain 初始化验证者集。
+  - `pub_key`: 第一个元素指定 `pub_key` 类型。1 == Ed25519。第二个元素是公钥字节。
+  - `power`: 验证者的投票权。
+  - `name`: 验证者的名称(可选)。
+- `app_hash`: 在创世中期望的应用程序哈希(由 `ResponseInfo` ABCI消息返回)。如果应用程序的哈希不匹配，Tendermint 会感到恐慌。
+- `app_state`: 应用程序状态(例如 tokens 的初始分发)。
 
-#### Sample genesis.json
+#### 示例 genesis.json
 
 ```
 {
@@ -91,104 +75,89 @@ definition](https://github.com/tendermint/tendermint/blob/master/types/genesis.g
 }
 ```
 
-## Run
+## 运行
 
-To run a Tendermint node, use
+要运行 Tendermint 节点，请使用
 
 ```
 tendermint node
 ```
 
-By default, Tendermint will try to connect to an ABCI application on
-[127.0.0.1:26658](127.0.0.1:26658). If you have the `kvstore` ABCI app
-installed, run it in another window. If you don't, kill Tendermint and
-run an in-process version of the `kvstore` app:
+默认情况下，Tendermint 将尝试连接到 [127.0.0.1:26658](127.0.0.1:26658) 上的 ABCI 应用程序。如果安装了 `kvstore` ABCI 应用程序，请在另一个窗口中运行它。如果你不这样做，杀死 Tendermint，运行一个进程中版本的 `kvstore` 应用程序:
 
 ```
 tendermint node --proxy_app=kvstore
 ```
 
-After a few seconds you should see blocks start streaming in. Note that
-blocks are produced regularly, even if there are no transactions. See
-_No Empty Blocks_, below, to modify this setting.
+几秒钟后，您应该会看到块开始流入。注意，即使没有交易，也会定期生成块。要修改此设置，请参见下面的 _没有空块_。
 
-Tendermint supports in-process versions of the `counter`, `kvstore` and
-`noop` apps that ship as examples with `abci-cli`. It's easy to compile
-your own app in-process with Tendermint if it's written in Go. If your
-app is not written in Go, simply run it in another process, and use the
-`--proxy_app` flag to specify the address of the socket it is listening
-on, for instance:
+Tendermint支持进程中版本的 `counter`、`kvstore`和 `noop` 应用程序，这些应用程序附带 `abci-cli` 作为示例。如果是用 Go 编写的，你可以很容易地用 Tendermint 编译自己的应用程序。如果您的应用程序不是用 Go 编写的，那么只需在另一个进程中运行它，并使用 `--proxy_app` 标志指定它正在监听的套接字的地址，例如:
 
 ```
 tendermint node --proxy_app=/var/run/abci.sock
 ```
 
-## Transactions
+## 交易
 
-To send a transaction, use `curl` to make requests to the Tendermint RPC
-server, for example:
+要发送交易，使用 `curl` 向 Tendermint RPC 服务器发出请求，例如：
 
 ```
 curl http://localhost:26657/broadcast_tx_commit?tx=\"abcd\"
 ```
 
-We can see the chain's status at the `/status` end-point:
+我们可以看到链在 `/status` 端点处的状态：
 
 ```
 curl http://localhost:26657/status | json_pp
 ```
 
-and the `latest_app_hash` in particular:
+特别是 `latest_app_hash`：
 
 ```
 curl http://localhost:26657/status | json_pp | grep latest_app_hash
 ```
 
-Visit http://localhost:26657 in your browser to see the list of other
-endpoints. Some take no arguments (like `/status`), while others specify
-the argument name and use `_` as a placeholder.
+在浏览器中访问 http://localhost:26657，查看其他端点的列表。有些不接受参数(如 `/status`)，而另一些指定参数名并使用 `_` 作为占位符。
 
-::: tip
-Find the RPC Documentation [here](https://tendermint.com/rpc/)
+::: 提示
+找到 RPC 文档[这里](https://tendermint.com/rpc/)
 :::
 
-### Formatting
+### 格式化
 
-The following nuances when sending/formatting transactions should be
-taken into account:
+发送/格式化交易时应考虑以下细微差别：
 
-With `GET`:
+对于 `GET`：
 
-To send a UTF8 string byte array, quote the value of the tx pramater:
+要发送 UTF8 字符串字节数组，请引用 tx 参数的值:
 
 ```
 curl 'http://localhost:26657/broadcast_tx_commit?tx="hello"'
 ```
 
-which sends a 5 byte transaction: "h e l l o" \[68 65 6c 6c 6f\].
+发送一个 5 字节的交易： "h e l l o" \[68 65 6c 6c 6f\].
 
-Note the URL must be wrapped with single quoes, else bash will ignore
-the double quotes. To avoid the single quotes, escape the double quotes:
+注意 URL 必须用单引号括起来，否则 bash 将忽略双引号。要避免单引号，请转义双引号：
 
 ```
 curl http://localhost:26657/broadcast_tx_commit?tx=\"hello\"
 ```
 
-Using a special character:
+使用特殊字符：
 
 ```
 curl 'http://localhost:26657/broadcast_tx_commit?tx="€5"'
 ```
 
-sends a 4 byte transaction: "€5" (UTF8) \[e2 82 ac 35\].
+发送一个 4 字节的交易： "€5" (UTF8) \[e2 82 ac 35\].
 
-To send as raw hex, omit quotes AND prefix the hex string with `0x`:
+要发送原始十六进制，省略引号，并在十六进制字符串前面加上 `0x`：
 
 ```
 curl http://localhost:26657/broadcast_tx_commit?tx=0x01020304
 ```
 
-which sends a 4 byte transaction: \[01 02 03 04\].
+发送一个 4 字节的交易： \[01 02 03 04\].
 
 With `POST` (using `json`), the raw hex must be `base64` encoded:
 
@@ -196,83 +165,63 @@ With `POST` (using `json`), the raw hex must be `base64` encoded:
 curl --data-binary '{"jsonrpc":"2.0","id":"anything","method":"broadcast_tx_commit","params": {"tx": "AQIDBA=="}}' -H 'content-type:text/plain;' http://localhost:26657
 ```
 
-which sends the same 4 byte transaction: \[01 02 03 04\].
+发送相同的 4 字节交易：\[01 02 03 04\].
 
-Note that raw hex cannot be used in `POST` transactions.
+注意，原始十六进制不能在 `POST` 交易中使用。
 
-## Reset
+## 复位
 
-**WARNING: UNSAFE** Only do this in development and only if you can
-afford to lose all blockchain data!
+**警告：不安全**只有在开发中这样做，并且只有在您能够承受丢失所有区块链数据的代价时才这样做!
 
-To reset a blockchain, stop the node and run:
+要重置区块链，请停止节点并运行：
 
 ```
 tendermint unsafe_reset_all
 ```
 
-This command will remove the data directory and reset private validator and
-address book files.
+该命令将删除数据目录并重置私有验证者和地址簿文件。
 
-## Configuration
+## 配置
 
-Tendermint uses a `config.toml` for configuration. For details, see [the
-config specification](./configuration.md).
+Tendermint使用了 `config.toml` 配置。有关详细信息，请参见[配置规范](./configuration.md)。
 
-Notable options include the socket address of the application
-(`proxy_app`), the listening address of the Tendermint peer
-(`p2p.laddr`), and the listening address of the RPC server
-(`rpc.laddr`).
+值得注意的选项包括应用程序的套接字地址(`proxy_app`)、Tendermint对等点的监听地址(`p2p.laddr`)和RPC服务器的监听地址(`rpc.laddr`)。
 
-Some fields from the config file can be overwritten with flags.
+配置文件中的一些字段可以用标记覆盖。
 
-## No Empty Blocks
+## 没有空块
 
-While the default behaviour of `tendermint` is still to create blocks
-approximately once per second, it is possible to disable empty blocks or
-set a block creation interval. In the former case, blocks will be
-created when there are new transactions or when the AppHash changes.
+虽然 `tendermint` 的默认行为仍然是大约每秒创建一次块，但是可以禁用空块或设置块创建间隔。在前一种情况下，当有新的交易或应用哈希更改时，将创建块。
 
-To configure Tendermint to not produce empty blocks unless there are
-transactions or the app hash changes, run Tendermint with this
-additional flag:
+要将 Tendermint 配置为不产生空块，除非有交易或应用程序哈希更改，运行 Tendermint 时附加这个标志:
 
 ```
 tendermint node --consensus.create_empty_blocks=false
 ```
 
-or set the configuration via the `config.toml` file:
+或者通过设置配置 `config.toml` 文件：
 
 ```
 [consensus]
 create_empty_blocks = false
 ```
 
-Remember: because the default is to _create empty blocks_, avoiding
-empty blocks requires the config option to be set to `false`.
+记住：因为默认值是 _创建空块_，所以避免空块需要将配置选项设置为 `false`。
 
-The block interval setting allows for a delay (in seconds) between the
-creation of each new empty block. It is set via the `config.toml`:
+块间隔设置允许在创建每个新的空块之间有一个延迟(以秒为单位)。它是通过 `config.toml` 设置的:
 
 ```
 [consensus]
 create_empty_blocks_interval = 5
 ```
 
-With this setting, empty blocks will be produced every 5s if no block
-has been produced otherwise, regardless of the value of
-`create_empty_blocks`.
+使用此设置，如果没有生成其他块，则每 5 秒生成一个空块，而不考虑 `create_empty_blocks` 的值。
 
-## Broadcast API
+## 广播 API
 
-Earlier, we used the `broadcast_tx_commit` endpoint to send a
-transaction. When a transaction is sent to a Tendermint node, it will
-run via `CheckTx` against the application. If it passes `CheckTx`, it
-will be included in the mempool, broadcasted to other peers, and
-eventually included in a block.
+前面，我们使用 `broadcast_tx_commit` 端点发送交易。当交易被发送到 Tendermint 节点时，它将通过应用程序的 `CheckTx` 运行。如果它通过 `CheckTx`，它将被包括在内存池中，广播给其他节点，并最终包含在一个块中。
 
-Since there are multiple phases to processing a transaction, we offer
-multiple endpoints to broadcast a transaction:
+由于处理交易有多个阶段，我们提供多个端点来广播交易：
 
 ```
 /broadcast_tx_async
@@ -280,34 +229,17 @@ multiple endpoints to broadcast a transaction:
 /broadcast_tx_commit
 ```
 
-These correspond to no-processing, processing through the mempool, and
-processing through a block, respectively. That is, `broadcast_tx_async`,
-will return right away without waiting to hear if the transaction is
-even valid, while `broadcast_tx_sync` will return with the result of
-running the transaction through `CheckTx`. Using `broadcast_tx_commit`
-will wait until the transaction is committed in a block or until some
-timeout is reached, but will return right away if the transaction does
-not pass `CheckTx`. The return value for `broadcast_tx_commit` includes
-two fields, `check_tx` and `deliver_tx`, pertaining to the result of
-running the transaction through those ABCI messages.
+它们分别对应于不处理、通过内存池的处理和通过块的处理。也就是说，`broadcast_tx_async` 将立即返回，而无需等待是否该交易有效，而 `broadcast_tx_sync` 将返回通过 `CheckTx` 运行该交易的结果。使用 `broadcast_tx_commit` 将等待交易在一个块中提交或达到某个超时，但如果交易没有通过 `CheckTx`，则会立即返回。`broadcast_tx_commit` 的返回值包括两个字段 `check_tx` 和 `deliver_tx`，用于修饰通过这些 ABCI 消息运行交易的结果。
 
-The benefit of using `broadcast_tx_commit` is that the request returns
-after the transaction is committed (i.e. included in a block), but that
-can take on the order of a second. For a quick result, use
-`broadcast_tx_sync`, but the transaction will not be committed until
-later, and by that point its effect on the state may change.
+使用 `broadcast_tx_commit` 的好处是，请求在交易提交后返回(即包含在一个块中)，但这可能需要一秒钟的时间。要得到一个快速的结果，可以使用`broadcast_tx_sync`，但是交易要到稍后才会提交，到那时它对状态的影响可能会发生变化。
 
-Note the mempool does not provide strong guarantees - just because a tx passed
-CheckTx (ie. was accepted into the mempool), doesn't mean it will be committed,
-as nodes with the tx in their mempool may crash before they get to propose.
-For more information, see the [mempool
-write-ahead-log](../tendermint-core/running-in-production.md#mempool-wal)
+注意内存池不提供强保证 - 仅仅因为交易通过了 CheckTx (即。，是否被接受进入内存池) 并不意味着它将被提交，因为在它们的内存池中包含交易的节点可能在它们提交之前崩溃。
+有关更多信息，请参见[内存池预写日志](../tendermint-core/running-in-production.md#mempool-wal)
 
-## Tendermint Networks
+## Tendermint 网络
 
-When `tendermint init` is run, both a `genesis.json` and
-`priv_validator.json` are created in `~/.tendermint/config`. The
-`genesis.json` might look like:
+运行 `tendermint init` 时，在 `~/.tendermint/config` 中创建两个文件 `genesis.json` 和
+`priv_validator.json`。这个 `genesis.json` 可能看起来像：
 
 ```
 {
@@ -327,7 +259,7 @@ When `tendermint init` is run, both a `genesis.json` and
 }
 ```
 
-And the `priv_validator.json`:
+和这个 `priv_validator.json`：
 
 ```
 {
@@ -346,85 +278,48 @@ And the `priv_validator.json`:
 }
 ```
 
-The `priv_validator.json` actually contains a private key, and should
-thus be kept absolutely secret; for now we work with the plain text.
-Note the `last_` fields, which are used to prevent us from signing
-conflicting messages.
+`priv_validator.json` 实际上包含一个私钥，因此应该绝对保密；现在我们使用纯文本。
+注意 `last_` 字段，它用于防止我们签署冲突的消息。
 
-Note also that the `pub_key` (the public key) in the
-`priv_validator.json` is also present in the `genesis.json`.
+还要注意 `priv_validator.json` 中的 `pub_key` (公钥) 也出现在 `genesis.json` 中。
 
-The genesis file contains the list of public keys which may participate
-in the consensus, and their corresponding voting power. Greater than 2/3
-of the voting power must be active (i.e. the corresponding private keys
-must be producing signatures) for the consensus to make progress. In our
-case, the genesis file contains the public key of our
-`priv_validator.json`, so a Tendermint node started with the default
-root directory will be able to make progress. Voting power uses an int64
-but must be positive, thus the range is: 0 through 9223372036854775807.
-Because of how the current proposer selection algorithm works, we do not
-recommend having voting powers greater than 10\^12 (ie. 1 trillion).
+创世文件包含可能参与共识的公钥列表及其相应的投票权。超过 2/3 的投票权必须是活跃的(即相应的私钥必须产生签名)，共识才能取得进展。在我们的例子中，创世文件包含了 `priv_validator.json` 的公钥。因此，一个使用默认根目录启动的 Tendermint 节点将能够取得进展。投票权使用 int64，但必须是正数，因此范围是：0 到9223372036854775807。
+由于目前提议人选择演算法的工作原理，我们不建议投票权大于 10\^12 (即。1万亿)。
 
-If we want to add more nodes to the network, we have two choices: we can
-add a new validator node, who will also participate in the consensus by
-proposing blocks and voting on them, or we can add a new non-validator
-node, who will not participate directly, but will verify and keep up
-with the consensus protocol.
+如果我们想要添加更多的节点网络，我们有两个选择：我们可以添加一个新的验证者节点，将参与共识，提出区块并对其进行表决，或者我们可以添加一个新的非验证者节点，没有直接参与，但将验证和跟上共识协议。
 
-### Peers
+### 节点
 
-#### Seed
+#### 种子
 
-A seed node is a node who relays the addresses of other peers which they know
-of. These nodes constantly crawl the network to try to get more peers. The
-addresses which the seed node relays get saved into a local address book. Once
-these are in the address book, you will connect to those addresses directly.
-Basically the seed nodes job is just to relay everyones addresses. You won't
-connect to seed nodes once you have received enough addresses, so typically you
-only need them on the first start. The seed node will immediately disconnect
-from you after sending you some addresses.
+种子节点是一个节点，它传递它们知道的其他节点的地址。这些节点不断地在网络中爬行，试图获得更多的节点。种子节点中继到本地地址簿中的地址。一旦这些在地址簿中，您将直接连接到这些地址。
+基本上种子节点的工作就是转发每个人的地址。一旦收到足够的地址，就不会连接到种子节点，因此通常只在第一次启动时需要它们。种子节点将在发送给您一些地址后立即断开与您的连接。
 
-#### Persistent Peer
+#### 持续节点
 
-Persistent peers are people you want to be constantly connected with. If you
-disconnect you will try to connect directly back to them as opposed to using
-another address from the address book. On restarts you will always try to
-connect to these peers regardless of the size of your address book.
+持续节点是你想要经常联系的人。如果断开连接，您将尝试直接连接回它们，而不是使用地址簿中的另一个地址。在重新启动时，无论地址簿的大小，您总是试图连接到这些节点。
 
-All peers relay peers they know of by default. This is called the peer exchange
-protocol (PeX). With PeX, peers will be gossipping about known peers and forming
-a network, storing peer addresses in the addrbook. Because of this, you don't
-have to use a seed node if you have a live persistent peer.
+默认情况下，所有节点都中继它们知道的节点。这称为对等交换协议(PeX)。使用 PeX，节点将广播已知的节点并形成一个网络，将节点地址存储在地址簿中。因此，如果您有一个活动的持久节点，则不必使用种子节点。
 
-#### Connecting to Peers
+#### 连接到节点
 
-To connect to peers on start-up, specify them in the
-`$TMHOME/config/config.toml` or on the command line. Use `seeds` to
-specify seed nodes, and
-`persistent_peers` to specify peers that your node will maintain
-persistent connections with.
+要在启动时连接到节点，请在 `$TMHOME/config/config.toml` 中指定它们。或者在命令行上。使用 `seeds` 指定种子节点，使用 `persistent_peers` 指定你的节点将与之保持持久连接的节点。
 
-For example,
+例如，
 
 ```
 tendermint node --p2p.seeds "f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656,0491d373a8e0fcf1023aaf18c51d6a1d0d4f31bd@5.6.7.8:26656"
 ```
 
-Alternatively, you can use the `/dial_seeds` endpoint of the RPC to
-specify seeds for a running node to connect to:
+或者，您可以使用 RPC 的 `/dial_seeds` 端点为要连接到的正在运行的节点指定种子：
 
 ```
 curl 'localhost:26657/dial_seeds?seeds=\["f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656","0491d373a8e0fcf1023aaf18c51d6a1d0d4f31bd@5.6.7.8:26656"\]'
 ```
 
-Note, with PeX enabled, you
-should not need seeds after the first start.
+注意，启用 PeX 后，在第一次启动之后不需要种子。
 
-If you want Tendermint to connect to specific set of addresses and
-maintain a persistent connection with each, you can use the
-`--p2p.persistent_peers` flag or the corresponding setting in the
-`config.toml` or the `/dial_peers` RPC endpoint to do it without
-stopping Tendermint core instance.
+如果您希望 Tendermint 连接到特定的地址集，并与每个地址保持持久连接，可以使用`--p2p.persistent_peers` 标志或者相应设置 `config.toml` 或者 `/dial_peers` RPC 端点在不停止 Tendermint 核心实例的情况下执行此操作。
 
 ```
 tendermint node --p2p.persistent_peers "429fcf25974313b95673f58d77eacdd434402665@10.11.12.13:26656,96663a3dd0d7b9d17d4c8211b191af259621c693@10.11.12.14:26656"
@@ -432,29 +327,21 @@ tendermint node --p2p.persistent_peers "429fcf25974313b95673f58d77eacdd434402665
 curl 'localhost:26657/dial_peers?persistent=true&peers=\["429fcf25974313b95673f58d77eacdd434402665@10.11.12.13:26656","96663a3dd0d7b9d17d4c8211b191af259621c693@10.11.12.14:26656"\]'
 ```
 
-### Adding a Non-Validator
+### 添加一个非验证者
 
-Adding a non-validator is simple. Just copy the original `genesis.json`
-to `~/.tendermint/config` on the new machine and start the node,
-specifying seeds or persistent peers as necessary. If no seeds or
-persistent peers are specified, the node won't make any blocks, because
-it's not a validator, and it won't hear about any blocks, because it's
-not connected to the other peer.
+添加非验证者很简单。复制原始的 `genesis.json` 到 `~/.tendermint/config`。启动节点，根据需要指定种子节点或持久节点。如果没有指定种子节点或持久对等节点，则节点不会生成任何块，因为它不是验证者，也不会听到任何块的消息，因为它没有连接到其他节点。
 
-### Adding a Validator
+### 添加一个验证者
 
-The easiest way to add new validators is to do it in the `genesis.json`,
-before starting the network. For instance, we could make a new
-`priv_validator.json`, and copy it's `pub_key` into the above genesis.
+添加新验证者的最简单方法是在启动网络之前在 `genesis.json` 中进行。例如，我们可以创建一个新的 `priv_validator.json`。，然后将它的 `pub_key` 复制到上面的创世文件中。
 
-We can generate a new `priv_validator.json` with the command:
+通过这个命令我们可以生成一个新的 `priv_validator.json`：
 
 ```
 tendermint gen_validator
 ```
 
-Now we can update our genesis file. For instance, if the new
-`priv_validator.json` looks like:
+现在我们可以更新创世文件了。例如，如果新的`priv_validator.json` 的如下:
 
 ```
 {
@@ -473,7 +360,7 @@ Now we can update our genesis file. For instance, if the new
 }
 ```
 
-then the new `genesis.json` will be:
+然后新的 `genesis.json` 将是:
 
 ```
 {
@@ -501,34 +388,20 @@ then the new `genesis.json` will be:
 }
 ```
 
-Update the `genesis.json` in `~/.tendermint/config`. Copy the genesis
-file and the new `priv_validator.json` to the `~/.tendermint/config` on
-a new machine.
+更新`~/.tendermint/config` 中的 `genesis.json`。复制创世文件和新的 `priv_validator.json`到新机器上 `~/.tendermint/config`。
 
-Now run `tendermint node` on both machines, and use either
-`--p2p.persistent_peers` or the `/dial_peers` to get them to peer up.
-They should start making blocks, and will only continue to do so as long
-as both of them are online.
+现在在两台机器上运行 `tendermint node`，并使用其中任何一台 `--p2p.persistent_peers` 或 `/dial_peers` 让他们连接该节点。
+他们应该开始制作区块，并且只会在他们都在线的情况下继续这样做。
 
-To make a Tendermint network that can tolerate one of the validators
-failing, you need at least four validator nodes (e.g., 2/3).
+要使 Tendermint 网络能够容忍一个验证者失败，至少需要四个验证者节点(例如，2/3)。
 
-Updating validators in a live network is supported but must be
-explicitly programmed by the application developer. See the [application
-developers guide](../app-dev/app-development.md) for more details.
+支持在活动网络中更新验证者，但必须由应用程序开发人员显式编程。有关详细信息，请参阅[应用程序开发人员指南](../app-dev/app-development.md)。
 
-### Local Network
+### 本地网络
 
-To run a network locally, say on a single machine, you must change the `_laddr`
-fields in the `config.toml` (or using the flags) so that the listening
-addresses of the various sockets don't conflict. Additionally, you must set
-`addr_book_strict=false` in the `config.toml`, otherwise Tendermint's p2p
-library will deny making connections to peers with the same IP address.
+要在本地运行网络，比如在一台机器上，您必须更改 `config.toml` (或使用标志)中的 `_laddr` 字段，以便不同套接字的侦听地址不会冲突。此外，必须在 `config.toml` 中设置 `addr_book_strict=false`。否则，Tendermint 的 p2p 库将拒绝连接到具有相同 IP 地址的节点。
 
-### Upgrading
+### 升级
 
-See the
-[UPGRADING.md](https://github.com/tendermint/tendermint/blob/master/UPGRADING.md)
-guide. You may need to reset your chain between major breaking releases.
-Although, we expect Tendermint to have fewer breaking releases in the future
-(especially after 1.0 release).
+看到 [UPGRADING.md](https://github.com/tendermint/tendermint/blob/master/UPGRADING.md) 指南。您可能需要在主要中断版本之间重置链。
+尽管如此，我们预计 Tendermint 在未来会有更少的中断版本(尤其是 1.0 版本之后)。

@@ -1,9 +1,8 @@
-# How to read logs
+# 如何读取日志
 
-## Walkabout example
+## 徒步旅行例子
 
-We first create three connections (mempool, consensus and query) to the
-application (running `kvstore` locally in this case).
+我们首先创建到应用程序的三个连接（内存池、共识和查询）（在本例中本地运行 `kvstore`）。
 
 ```
 I[10-04|13:54:27.364] Starting multiAppConn                        module=proxy impl=multiAppConn
@@ -12,7 +11,7 @@ I[10-04|13:54:27.366] Starting localClient                         module=abci-c
 I[10-04|13:54:27.367] Starting localClient                         module=abci-client connection=consensus impl=localClient
 ```
 
-Then Tendermint Core and the application perform a handshake.
+然后，Tendermint Core 和应用程序执行握手。
 
 ```
 I[10-04|13:54:27.367] ABCI Handshake                               module=consensus appHeight=90 appHash=E0FBAFBF6FCED8B9786DDFEB1A0D4FA2501BADAD
@@ -20,8 +19,7 @@ I[10-04|13:54:27.368] ABCI Replay Blocks                           module=consen
 I[10-04|13:54:27.368] Completed ABCI Handshake - Tendermint and App are synced module=consensus appHeight=90 appHash=E0FBAFBF6FCED8B9786DDFEB1A0D4FA2501BADAD
 ```
 
-After that, we start a few more things like the event switch, reactors,
-and perform UPNP discover in order to detect the IP address.
+在此之后，我们启动更多的事情，比如事件开关、反应器，并执行 UPNP 发现来检测 IP 地址。
 
 ```
 I[10-04|13:54:27.374] Starting EventSwitch                         module=types impl=EventSwitch
@@ -41,10 +39,9 @@ I[10-04|13:54:30.387] Starting WAL                                 module=consen
 I[10-04|13:54:30.388] Starting TimeoutTicker                       module=consensus impl=TimeoutTicker
 ```
 
-Notice the second row where Tendermint Core reports that "This node is a
-validator". It also could be just an observer (regular node).
+注意第二行，Tendermint Core 报告“这个节点是一个验证者”。它也可以只是一个观察者(普通节点)。
 
-Next we replay all the messages from the WAL.
+接下来，我们将重播来自 WAL 的所有消息。
 
 ```
 I[10-04|13:54:30.390] Catchup by replaying consensus messages      module=consensus height=91
@@ -52,19 +49,14 @@ I[10-04|13:54:30.390] Replay: New Step                             module=consen
 I[10-04|13:54:30.390] Replay: Done                                 module=consensus
 ```
 
-"Started node" message signals that everything is ready for work.
+“已启动节点”消息表示一切准备就绪。
 
 ```
 I[10-04|13:54:30.391] Starting RPC HTTP server on tcp socket 0.0.0.0:26657 module=rpc-server
 I[10-04|13:54:30.392] Started node                                 module=main nodeInfo="NodeInfo{id: DF22D7C92C91082324A1312F092AA1DA197FA598DBBFB6526E, moniker: anonymous, network: test-chain-3MNw2N [remote , listen 10.0.2.15:26656], version: 0.11.0-10f361fc ([wire_version=0.6.2 p2p_version=0.5.0 consensus_version=v1/0.2.2 rpc_version=0.7.0/3 tx_index=on rpc_addr=tcp://0.0.0.0:26657])}"
 ```
 
-Next follows a standard block creation cycle, where we enter a new
-round, propose a block, receive more than 2/3 of prevotes, then
-precommits and finally have a chance to commit a block. For details,
-please refer to [Consensus
-Overview](../introduction/introduction.md#consensus-overview) or [Byzantine Consensus
-Algorithm](../spec/consensus/consensus.md).
+接下来是一个标准块创建周期，我们进入一个新轮，提出一个块，获得超过 2/3 的预投票，然后预提交，最后有机会提交一个块。详情请参阅[共识概览](../introduction/introduction.md#consensus-overview)或[拜占庭共识算法](../spec/consensus/consensus.md)。
 
 ```
 I[10-04|13:54:30.393] enterNewRound(91/0). Current: 91/0/RoundStepNewHeight module=consensus
@@ -107,36 +99,17 @@ I[10-04|13:54:30.410] Committed state                              module=state 
 I[10-04|13:54:30.410] Recheck txs                                  module=mempool numtxs=0 height=91
 ```
 
-## List of modules
+## 模块列表
 
-Here is the list of modules you may encounter in Tendermint's log and a
-little overview what they do.
+以下是您可能在 Tendermint 的日志中遇到的模块列表，并简要介绍了它们的功能。
 
-- `abci-client` As mentioned in [Application Development Guide](../app-dev/app-development.md), Tendermint acts as an ABCI
-  client with respect to the application and maintains 3 connections:
-  mempool, consensus and query. The code used by Tendermint Core can
-  be found [here](https://github.com/tendermint/tendermint/tree/develop/abci/client).
-- `blockchain` Provides storage, pool (a group of peers), and reactor
-  for both storing and exchanging blocks between peers.
-- `consensus` The heart of Tendermint core, which is the
-  implementation of the consensus algorithm. Includes two
-  "submodules": `wal` (write-ahead logging) for ensuring data
-  integrity and `replay` to replay blocks and messages on recovery
-  from a crash.
-- `events` Simple event notification system. The list of events can be
-  found
-  [here](https://github.com/tendermint/tendermint/blob/master/types/events.go).
-  You can subscribe to them by calling `subscribe` RPC method. Refer
-  to [RPC docs](./rpc.md) for additional information.
-- `mempool` Mempool module handles all incoming transactions, whenever
-  they are coming from peers or the application.
-- `p2p` Provides an abstraction around peer-to-peer communication. For
-  more details, please check out the
-  [README](https://github.com/tendermint/tendermint/blob/master/p2p/README.md).
-- `rpc` [Tendermint's RPC](./rpc.md).
-- `rpc-server` RPC server. For implementation details, please read the
-  [doc.go](https://github.com/tendermint/tendermint/blob/master/rpc/lib/doc.go).
-- `state` Represents the latest state and execution submodule, which
-  executes blocks against the application.
-- `types` A collection of the publicly exposed types and methods to
-  work with them.
+- `abci-client` 如[应用程序开发指南](../app-dev/app-development.md)所述，Tendermint 是 ABCI 的客户端，负责维护3个连接：内存池，共识和查询。Tendermint Core使用的代码可以在[这里](https://github.com/tendermint/tendermint/tree/develop/abci/client)找到。
+- `blockchain` 提供用于在节点之间存储和交换块的存储、池(一组节点)和反应器。
+- `consensus` Tendermint Core 的核心，即实现了共识算法。包括两个“子模块”：`wal` (write-ahead logging) 以确保数据完整性和 `replay` 重播从崩溃中恢复的块和消息。
+- `events` 简单的事件通知系统。事件列表可以在[这里](https://github.com/tendermint/tendermint/blob/master/types/events.go)找到。您可以通过调用 `subscribe` RPC方法订阅它们。更多信息请参考[RPC文档](./rpc.md)。
+- `mempool` 内存池模块处理来自节点或应用程序的所有传入交易。
+- `p2p` 提供围绕点对点通信的抽象。有关详细信息，请查看 [README](https://github.com/tendermint/tendermint/blob/master/p2p/README.md)。
+- `rpc` [Tendermint's RPC](./rpc.md)。
+- `rpc-server` RPC 服务器。有关实现详情，请参阅 [doc.go](https://github.com/tendermint/tendermint/blob/master/rpc/lib/doc.go)。
+- `state` 表示最新的状态和执行子模块，它针对应用程序执行块。
+- `types` 用于处理它们的公开的类型和方法的集合。

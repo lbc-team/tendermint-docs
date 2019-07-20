@@ -1,30 +1,15 @@
-# Light Client Protocol
+# 轻客户端协议
 
-Light clients are an important part of the complete blockchain system
-for most applications. Tendermint provides unique speed and security
-properties for light client applications.
+对于大多数应用程序来说，轻客户端是完整的区块链系统的重要组成部分。Tendermint 为轻客户端应用程序提供了独特的速度和安全性。
 
-See our [lite
-package](https://godoc.org/github.com/tendermint/tendermint/lite).
+请见我们的 [lite package](https://godoc.org/github.com/tendermint/tendermint/lite)。
 
-## Overview
+## 概述
 
-The objective of the light client protocol is to get a
-commit for a recent block
-hash where the commit includes a
-majority of signatures from the last known validator set. From there,
-all the application state is verifiable with [merkle
-proofs](../spec/blockchain/encoding.md#iavl-tree).
+轻客户端协议的目标是为最近的块哈希获取提交，其中提交包含来自最后一个已知验证者集的大部分签名。从那里，所有的应用状态都可以用[默克尔证明](../spec/blockchain/encoding.md#iavl-tree)进行验证。
 
-## Properties
+## 属性
 
-- You get the full collateralized security benefits of Tendermint; No
-  need to wait for confirmations.
-- You get the full speed benefits of Tendermint; transactions
-  commit instantly.
-- You can get the most recent version of the application state
-  non-interactively (without committing anything to the blockchain).
-  For example, this means that you can get the most recent value of a
-  name from the name-registry without worrying about fork censorship
-  attacks, without posting a commit and waiting for confirmations.
-  It's fast, secure, and free!
+- 你得到了 Tendermint 的全部担保安全优势；不需要等待确认。
+- 你得到了 Tendermint 的全速优势；立即提交交易。
+- 您可以非交互式地获得应用程序状态的最新版本(无需向区块链提交任何内容)。例如，这意味着您可以从名称注册中心获得名称的最新值，而无需担心交叉审查攻击、无需提交和等待确认。它快速、安全、免费！

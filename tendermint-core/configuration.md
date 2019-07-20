@@ -1,16 +1,10 @@
-# Configuration
+# 配置
 
-Tendermint Core can be configured via a TOML file in
-`$TMHOME/config/config.toml`. Some of these parameters can be overridden by
-command-line flags. For most users, the options in the `##### main base configuration options #####` are intended to be modified while
-config options further below are intended for advance power users.
+Tendermint Core 可以通过 `$TMHOME/config/config.toml` TOML 文件进行配置。其中一些参数可以由命令行标志覆盖。对于大多数用户来说，对于大多数用户来说，`##### main base configuration options #####` 中的选项将被修改，而下面的配置选项将用于高级用户。
 
-## Options
+## 选项
 
-The default configuration file create by `tendermint init` has all
-the parameters set with their default values. It will look something
-like the file below, however, double check by inspecting the
-`config.toml` created with your version of `tendermint` installed:
+由 `tendermint init` 创建的默认配置文件使用默认值设置了所有参数。不过，它看起来就像下面的文件一样，通过您已安装的 `tendermint` 版本创建的 `config.toml` 进行双重检查：
 
 ```
 # This is a TOML config file.
@@ -296,43 +290,27 @@ max_open_connections = 3
 namespace = "tendermint"
 ```
 
-## Empty blocks VS no empty blocks
+## 空块 VS 没有空块
 
 **create_empty_blocks = true**
 
-If `create_empty_blocks` is set to `true` in your config, blocks will be
-created ~ every second (with default consensus parameters). You can regulate
-the delay between blocks by changing the `timeout_commit`. E.g. `timeout_commit
-= "10s"` should result in ~ 10 second blocks.
+如果在你的配置中 `create_empty_blocks` 被设置为 `true`，
+
+If `create_empty_blocks` is set to `true` in your config, 每隔大约一秒就会创建一个块(默认的共识参数)。您可以通过更改 `timeout_commit` 来调节块之间的延迟。如 `timeout_commit = "10s"` 应该导致大约每 10 秒一个块。
 
 **create_empty_blocks = false**
 
-In this setting, blocks are created when transactions received.
+在此设置中，在接收交易时创建块。
 
-Note after the block H, Tendermint creates something we call a "proof block"
-(only if the application hash changed) H+1. The reason for this is to support
-proofs. If you have a transaction in block H that changes the state to X, the
-new application hash will only be included in block H+1. If after your
-transaction is committed, you want to get a lite-client proof for the new state
-(X), you need the new block to be committed in order to do that because the new
-block has the new application hash for the state X. That's why we make a new
-(empty) block if the application hash changes. Otherwise, you won't be able to
-make a proof for the new state.
+注意，在 H 块之后，Tendermint 创建了一个我们称为 H+1 “proof block”的东西(只有当应用程序哈希发生变化时) 。这样做的原因是为了支持证明。如果在块 H 中有一个交易将状态更改为 X，则新的应用程序哈希将只包含在块 H+1 中。如果提交交易后，你想要一个轻节点证明新状态(X)，为此，需要提交新块，因为新块具有状态 X 的新应用程序哈希。这就是为什么如果应用程序块哈希变化我们出一个新块(空的)。否则，就无法证明新状态。
 
-Plus, if you set `create_empty_blocks_interval` to something other than the
-default (`0`), Tendermint will be creating empty blocks even in the absence of
-transactions every `create_empty_blocks_interval`. For instance, with
-`create_empty_blocks = false` and `create_empty_blocks_interval = "30s"`,
-Tendermint will only create blocks if there are transactions, or after waiting
-30 seconds without receiving any transactions.
+另外，如果您将 `create_empty_blocks_interval` 设置为默认值(`0`)以外的值，Tendermint 将创建空块，即使在每个 `create_empty_blocks_interval` 都没有交易的情况下也是如此。例如，使用 `create_empty_blocks = false` 和 `create_empty_blocks_interval = "30s"`，Tendermint 只在有交易时创建块，或者在等待 30 秒后没有收到任何交易时创建块。
 
-## Consensus timeouts explained
+## 共识超时解释
 
-There's a variety of information about timeouts in [Running in
-production](./running-in-production.html)
+关于[生产运行中](./running-in-production.html)的超时有很多信息。
 
-You can also find more detailed technical explanation in the spec: [The latest
-gossip on BFT consensus](https://arxiv.org/abs/1807.04938).
+您还可以在规范中找到更详细的技术解释：[拜占庭共识最新 gossip](https://arxiv.org/abs/1807.04938)。
 
 ```
 [consensus]
@@ -347,22 +325,14 @@ timeout_precommit_delta = "500ms"
 timeout_commit = "1s"
 ```
 
-Note that in a successful round, the only timeout that we absolutely wait no
-matter what is `timeout_commit`.
+注意，在成功的一个轮中，我们绝对等待的惟一超时是 `timeout_commit`。
 
-Here's a brief summary of the timeouts:
+以下是超时时间的简要总结:
 
-- `timeout_propose` = how long we wait for a proposal block before prevoting
-  nil
-- `timeout_propose_delta` = how much timeout_propose increases with each round
-- `timeout_prevote` = how long we wait after receiving +2/3 prevotes for
-  anything (ie. not a single block or nil)
-- `timeout_prevote_delta` = how much the timeout_prevote increases with each
-  round
-- `timeout_precommit` = how long we wait after receiving +2/3 precommits for
-  anything (ie. not a single block or nil)
-- `timeout_precommit_delta` = how much the timeout_precommit increases with
-  each round
-- `timeout_commit` = how long we wait after committing a block, before starting
-  on the new height (this gives us a chance to receive some more precommits,
-  even though we already have +2/3)
+- `timeout_propose` = 我们要等多久才会有提案被否决
+- `timeout_propose_delta` = 每轮增加的 timeout_propose
+- `timeout_prevote` = 在收到 +2/3 的预选后我们要等多久 (也就是说，没有一个快或者空)
+- `timeout_prevote_delta` = 每轮增加的 timeout_prevote
+- `timeout_precommit` = 在收到 +2/3 的预提交后我们要等多久 (也就是说，没有一个快或者空)
+- `timeout_precommit_delta` = 每轮增加的 timeout_precommit
+- `timeout_commit` = 提交一个块之后，在开始新的高度之前等待的时间(这给了我们一个机会来接收更多的预提交，即使我们已经有 +2/3)

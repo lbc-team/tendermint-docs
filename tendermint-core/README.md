@@ -1,4 +1,4 @@
-# Overview
+# 概述
 
-See the side-bar for details on the various features of Tendermint Core.
+有关 Tendermint Core 的各种特性的详细信息，请参阅侧栏。
 
