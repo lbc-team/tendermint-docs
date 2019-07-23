@@ -1,32 +1,21 @@
 # tm-signer-harness
 
-Located under the `tools/tm-signer-harness` folder in the [Tendermint
-repository](https://github.com/tendermint/tendermint).
+Tendermint 远程签名者测试工具促进了 Tendermint 和远程签名者之间的集成测试，比如 [KMS](https://github.com/tendermint/kms)。这种远程签名者允许使用[HSMs](https://en.wikipedia.org/wiki/Hardware_security_module) 签署重要的 Tendermint 消息，从而提供额外的安全性。
 
-The Tendermint remote signer test harness facilitates integration testing
-between Tendermint and remote signers such as
-[KMS](https://github.com/tendermint/kms). Such remote signers allow for signing
-of important Tendermint messages using
-[HSMs](https://en.wikipedia.org/wiki/Hardware_security_module), providing
-additional security.
+当执行时, `tm-signer-harness`：
 
-When executed, `tm-signer-harness`:
+1. 运行侦听器(TCP或Unix套接字)。
+2. 等待来自远程签名者的连接。
+3. 从远程签名者连接后，执行许多自动化测试以确保兼容性。
+4. 验证成功后，控制流程将以 0 退出码退出。验证失败后，它将使用与错误相关的特定退出码退出。
 
-1. Runs a listener (either TCP or Unix sockets).
-2. Waits for a connection from the remote signer.
-3. Upon connection from the remote signer, executes a number of automated tests
-   to ensure compatibility.
-4. Upon successful validation, the harness process exits with a 0 exit code.
-   Upon validation failure, it exits with a particular exit code related to the
-   error.
+## 先决条件
 
-## Prerequisites
-Requires the same prerequisites as for building
-[Tendermint](https://github.com/tendermint/tendermint).
+要求与构建 [Tendermint](https://github.com/tendermint/tendermint) 相同的先决条件。
 
-## Building
-From the `tools/tm-signer-harness` directory in your Tendermint source
-repository, simply run:
+## 构建
+
+从您的 Tendermint 源代码库中 `tools/tm-signer-harness` 目录，只需运行：
 
 ```bash
 make
@@ -35,35 +24,31 @@ make
 make install
 ```
 
-## Docker Image
-To build a Docker image containing the `tm-signer-harness`, also from the
-`tools/tm-signer-harness` directory of your Tendermint source repo, simply run:
+## Docker 镜像
+
+要构建一个包含 `tm-signer-harness` 的 Docker 镜像，也可以从 Tendermint 源代码库的 `tools/tm-signer-harness` 目录中找到，只需运行：
 
 ```bash
 make docker-image
 ```
 
-## Running against KMS
-As an example of how to use `tm-signer-harness`, the following instructions show
-you how to execute its tests against [KMS](https://github.com/tendermint/kms).
-For this example, we will make use of the **software signing module in KMS**, as
-the hardware signing module requires a physical
-[YubiHSM](https://www.yubico.com/products/yubihsm/) device.
+## 针对 KMS 运行
 
-### Step 1: Install KMS on your local machine
-See the [KMS repo](https://github.com/tendermint/kms) for details on how to set
-KMS up on your local machine.
+作为如何使用 `tm-signer-harness` 的示例，下面的说明向您展示了如何针对 [KMS](https://github.com/tendermint/kms) 执行它的测试。对于本例，我们将使用**KMS中的软件签名模块**，因为硬件签名模块需要一个物理设备 [YubiHSM](https://www.yubico.com/products/yubihsm/)。
 
-If you have [Rust](https://www.rust-lang.org/) installed on your local machine,
-you can simply install KMS by:
+### 步骤 1: 在本地计算机上安装 KMS
+
+有关如何在本地机器上设置 KMS 的详细信息，请参阅[KMS 库](https://github.com/tendermint/kms)。
+
+如果您在本地机器上安装了 [Rust](https://www.rust-lang.org/)，您可以通过以下方式安装 KMS：
 
 ```bash
 cargo install tmkms
 ```
 
-### Step 2: Make keys for KMS
-The KMS software signing module needs a key with which to sign messages. In our
-example, we will simply export a signing key from our local Tendermint instance.
+### Step 2: 为 KMS 制作密钥
+
+KMS 软件签名模块需要一个密钥来签署消息。在我们的示例中，我们将简单地从本地 Tendermint 实例导出一个签名密钥。
 
 ```bash
 # Will generate all necessary Tendermint configuration files, including:
@@ -77,17 +62,15 @@ tm-signer-harness extract_key \      # Use the "extract_key" command
     -output ./signing.key            # Where to write the key
 ```
 
-Also, because we want KMS to connect to `tm-signer-harness`, we will need to
-provide a secret connection key from KMS' side:
+此外，由于我们希望 KMS 连接到 `tm-signer-harness`，我们需要从 KMS 侧提供一个秘密连接密钥：
 
 ```bash
 tmkms keygen secret_connection.key
 ```
 
-### Step 3: Configure and run KMS
-KMS needs some configuration to tell it to use the softer signing module as well
-as the `signing.key` file we just generated. Save the following to a file called
-`tmkms.toml`:
+### Step 3: 配置并运行 KMS
+
+KMS 需要一些配置来告诉它使用更软的签名模块和 `signing.key`。我们刚刚生成的密钥文件。将以下内容保存到一个名为 `tmkms.toml` 的文件中：
 
 ```toml
 [[validator]]
@@ -101,17 +84,17 @@ id = "test-chain-0XwP5E"               # The Tendermint chain ID for which KMS w
 path = "./signing.key"                 # The signing key we extracted earlier.
 ```
 
-Then run KMS with this configuration:
+然后运行 KMS 与此配置：
 
 ```bash
 tmkms start -c tmkms.toml
 ```
 
-This will start KMS, which will repeatedly try to connect to
-`tcp://127.0.0.1:61219` until it is successful.
+这将启动 KMS，它将反复尝试连接到 `tcp://127.0.0.1:61219`，直到成功为止。
 
-### Step 4: Run tm-signer-harness
-Now we get to run the signer test harness:
+### Step 4: 运行 tm-signer-harness
+
+现在我们来运行签名者测试工具：
 
 ```bash
 tm-signer-harness run \             # The "run" command executes the tests
@@ -119,28 +102,26 @@ tm-signer-harness run \             # The "run" command executes the tests
     -tmhome ~/.tendermint           # Where to find our Tendermint configuration/data files.
 ```
 
-If the current version of Tendermint and KMS are compatible, `tm-signer-harness`
-should now exit with a 0 exit code. If they are somehow not compatible, it
-should exit with a meaningful non-zero exit code (see the exit codes below).
+如果 Tendermint 和 KMS 的当前版本兼容，`tm-signer-harness` 现在应该以 0 退出码退出。如果它们不兼容，则应该使用有意义的非零退出码退出(参见下面的退出代码)。
 
-### Step 5: Shut down KMS
-Simply hit Ctrl+Break on your KMS instance (or use the `kill` command in Linux)
-to terminate it gracefully.
+### Step 5: 关闭 KMS
 
-## Exit Code Meanings
-The following list shows the various exit codes from `tm-signer-harness` and
-their meanings:
+只需在 KMS 实例上按 Ctrl+Break (或在Linux中使用 `kill` 命令)优雅地终止它。
+
+## 退出码含义
+
+以下列表显示了 `tm-signer-harness` 中的各种退出码及其含义：
 
 | Exit Code | Description |
 | --- | --- |
-| 0 | Success! |
-| 1 | Invalid command line parameters supplied to `tm-signer-harness` |
-| 2 | Maximum number of accept retries reached (the `-accept-retries` parameter) |
-| 3 | Failed to load `${TMHOME}/config/genesis.json` |
-| 4 | Failed to create listener specified by `-addr` parameter |
-| 5 | Failed to start listener |
-| 6 | Interrupted by `SIGINT` (e.g. when hitting Ctrl+Break or Ctrl+C) |
-| 7 | Other unknown error |
-| 8 | Test 1 failed: public key mismatch |
-| 9 | Test 2 failed: signing of proposals failed |
-| 10 | Test 3 failed: signing of votes failed |
+| 0 | 成功! |
+| 1 | 提供给 `tm-signer-harness` 的命令行参数无效 |
+| 2 | 达到的最大接受重试次数(`-accept-retries` 参数) |
+| 3 | 加载 `${TMHOME}/config/genesis.json` 失败 |
+| 4 | 未能创建由 `-addr` 参数指定的侦听器 |
+| 5 | 启动监听器失败 |
+| 6 | 被 `SIGINT` 中断 (例如按 Ctrl+Break 或 Ctrl+C) |
+| 7 | 其他未知的错误 |
+| 8 | 测试 1 失败:公钥不匹配 |
+| 9 | 测试 2 失败:提案签署失败 |
+| 10 | 测试 3 失败:投票签名失败 |

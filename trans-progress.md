@@ -11,5 +11,6 @@
 | tendermint-core/* | 认领 | 小熊bill |        |      |
 | spec/*            | 认领 | 小熊bill |        |      |
 | networks/*        | 认领 | 小熊bill |        |      |
+| tools/*           | 认领 | 小熊bill |        |      |
 
 

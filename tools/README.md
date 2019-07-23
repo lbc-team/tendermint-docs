@@ -1,7 +1,7 @@
-# Overview
+# 概述
 
-Tendermint comes with some tools for:
+Tendermint 带有一些工具：
 
-* [Benchmarking](./benchmarking.md)
-* [Monitoring](./monitoring.md)
-* [Validation of remote signers](./remote-signer-validation.md)
+* [基准测试](./benchmarking.md)
+* [监控](./monitoring.md)
+* [远程签名者的验证](./remote-signer-validation.md)
