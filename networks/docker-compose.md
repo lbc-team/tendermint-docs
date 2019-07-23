@@ -1,20 +1,18 @@
 # Docker Compose
 
-With Docker Compose, you can spin up local testnets with a single command.
+使用 Docker Compose，您可以使用一个命令启动本地测试网络。
 
-## Requirements
+## 需求
 
-1. [Install tendermint](../introduction/install.md)
-2. [Install docker](https://docs.docker.com/engine/installation/)
-3. [Install docker-compose](https://docs.docker.com/compose/install/)
+1. [安装 tendermint](../introduction/install.md)
+2. [安装 docker](https://docs.docker.com/engine/installation/)
+3. [安装 docker-compose](https://docs.docker.com/compose/install/)
 
-## Build
+## 构建
 
-Build the `tendermint` binary and, optionally, the `tendermint/localnode`
-docker image.
+构建 `tendermint` 二进制文件和可选 `tendermint/localnode` docker 映像。
 
-Note the binary will be mounted into the container so it can be updated without
-rebuilding the image.
+注意，二进制文件将被挂载到容器中，因此可以在不重新构建镜像的情况下更新它。
 
 ```
 cd $GOPATH/src/github.com/tendermint/tendermint
@@ -26,23 +24,21 @@ make build-linux
 make build-docker-localnode
 ```
 
-## Run a testnet
+## 运行一个测试网络
 
-To start a 4 node testnet run:
+要启动 4 个节点的测试网络运行：
 
 ```
 make localnet-start
 ```
 
-The nodes bind their RPC servers to ports 26657, 26660, 26662, and 26664 on the
-host.
+节点将其 RPC 服务器绑定到主机上的端口 26657、26660、26662和26664。
 
-This file creates a 4-node network using the localnode image.
+该文件使用 localnode 镜像创建一个 4 个节点的网络。
 
-The nodes of the network expose their P2P and RPC endpoints to the host machine
-on ports 26656-26657, 26659-26660, 26661-26662, and 26663-26664 respectively.
+网络节点分别向端口 26656-26657、26659-26660、26661-26662 和 26663-26664 上的主机公开它们的 P2P 和 RPC 端点。
 
-To update the binary, just rebuild it and restart the nodes:
+要更新二进制文件，只需重新构建并重新启动节点:
 
 ```
 make build-linux
@@ -50,15 +46,13 @@ make localnet-stop
 make localnet-start
 ```
 
-## Configuration
+## 配置
 
-The `make localnet-start` creates files for a 4-node testnet in `./build` by
-calling the `tendermint testnet` command.
+`make localnet-start` 过调用 `tendermint testnet` 命令为一个 4 节点的测试网络在 `./build` 目录创建文件。
 
-The `./build` directory is mounted to the `/tendermint` mount point to attach
-the binary and config files to the container.
+`./build` 目录被挂载到 `/tendermint` 挂载点，将二进制文件和配置文件附加到容器上。
 
-To change the number of validators / non-validators change the `localnet-start` Makefile target:
+要更改验证者/非验证者的数量，请更改 `localnet-start` Makefile 目标:
 
 ```
 localnet-start: localnet-stop
@@ -66,10 +60,9 @@ localnet-start: localnet-stop
 	docker-compose up
 ```
 
-The command now will generate config files for 5 validators and 3
-non-validators network.
+该命令现在将为 5 个验证者和 3 个非验证者网络生成配置文件。
 
-Before running it, don't forget to cleanup the old files:
+在运行之前，不要忘记清理旧文件：
 
 ```
 cd $GOPATH/src/github.com/tendermint/tendermint
@@ -78,9 +71,9 @@ cd $GOPATH/src/github.com/tendermint/tendermint
 rm -rf ./build/node*
 ```
 
-## Configuring abci containers 
+## 配置 abci 容器 
 
-To use your own abci applications with 4-node setup edit the [docker-compose.yaml](https://github.com/tendermint/tendermint/blob/develop/docker-compose.yml) file and add image to your abci application.
+要使用您自己的带有 4 个节点设置的 abci 应用程序，请编辑 [docker-compose.yaml](https://github.com/tendermint/tendermint/blob/develop/docker-compose.yml)。文件并将镜像添加到 abci 应用程序中。
 
 ```
  abci0:
@@ -129,7 +122,7 @@ To use your own abci applications with 4-node setup edit the [docker-compose.yam
 
 ```
 
-Override the [command](https://github.com/tendermint/tendermint/blob/master/networks/local/localnode/Dockerfile#L12) in each node to connect to it's abci. 
+覆盖每个节点中的[command](https://github.com/tendermint/tendermint/blob/master/networks/local/localnode/Dockerfile#L12)以连接到它的 abci。
 
 ```
   node0:
@@ -148,16 +141,12 @@ Override the [command](https://github.com/tendermint/tendermint/blob/master/netw
         ipv4_address: 192.167.10.2
 ```
 
-Similarly do for node1, node2 and node3 then [run testnet](https://github.com/tendermint/tendermint/blob/master/docs/networks/docker-compose.md#run-a-testnet)
+对 node1、node2 和 node3 执行类似的操作，然后[运行测试网络](https://github.com/tendermint/tendermint/blob/master/docs/networks/docker-compose.md#run-a-testnet)
 
-## Logging
+## 日志
 
-Log is saved under the attached volume, in the `tendermint.log` file. If the
-`LOG` environment variable is set to `stdout` at start, the log is not saved,
-but printed on the screen.
+日志保存在附加卷的 `tendermint.log` 文件中。如果开始时将 `LOG` 环境变量设置为 `stdout`，则不会保存日志，而是打印在屏幕上。
 
-## Special binaries
+## 特殊的二进制文件
 
-If you have multiple binaries with different names, you can specify which one
-to run with the `BINARY` environment variable. The path of the binary is relative
-to the attached volume.
+如果您有多个具有不同名称的二进制文件，您可以指定使用 `BINARY` 环境变量运行哪个二进制文件。二进制文件的路径相对于所附的卷。

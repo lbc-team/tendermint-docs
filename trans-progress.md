@@ -10,6 +10,6 @@
 | introduction/*    | 认领 | Tiny熊   |        |      |
 | tendermint-core/* | 认领 | 小熊bill |        |      |
 | spec/*            | 认领 | 小熊bill |        |      |
-
+| networks/*        | 认领 | 小熊bill |        |      |
 
 

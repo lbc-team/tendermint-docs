@@ -1,83 +1,62 @@
-# Deploy a Testnet
+# 部署一个测试网络
 
-DEPRECATED DOCS!
+弃用文档！
 
-See [Networks](../networks).
+见[网络](../networks)。
 
-## Manual Deployments
+## 手动部署
 
-It's relatively easy to setup a Tendermint cluster manually. The only
-requirements for a particular Tendermint node are a private key for the
-validator, stored as `priv_validator.json`, a node key, stored as
-`node_key.json` and a list of the public keys of all validators, stored
-as `genesis.json`. These files should be stored in
-`~/.tendermint/config`, or wherever the `$TMHOME` variable might be set
-to.
+手动设置 Tendermint 集群相对容易。对于一个特定的 Tendermint 节点，惟一的要求是验证者的私钥，存储为 `priv_validator.json`。一个节点密钥，存储为 `node_key.json`。以及所有验证者的公钥列表，存储为 `genesis.json`。这些文件应该存储在 `~/.tendermint/config`，或任何可能设置 `$TMHOME` 变量的地方。
 
-Here are the steps to setting up a testnet manually:
+以下是手动设置测试网络的步骤：
 
-1.  Provision nodes on your cloud provider of choice
-2.  Install Tendermint and the application of interest on all nodes
-3.  Generate a private key and a node key for each validator using
-    `tendermint init`
-4.  Compile a list of public keys for each validator into a
-    new `genesis.json` file and replace the existing file with it.
-5.  Get the node IDs of any peers you want other peers to connect to by
-    running `tendermint show_node_id` on the relevant machine
-6.  Set the `p2p.persistent_peers` in the config for all nodes to the comma
-    separated list of `ID@IP:PORT` for all nodes. Default port is 26656.
+1.  在您选择的云提供商上提供节点
+2.  在所有节点上安装 Tendermint 和感兴趣的应用程序
+3.  使用 `tendermint init` 为每个验证者生成私钥和节点密钥
+4.  将每个验证者的公钥列表编译为一个新的 `genesis.json` 文件替换现有文件。
+5.  通过在相关机器上运行 `tendermint show_node_id`，获取您希望其他节点连接到的任何节点的节点 ID
+6.  将所有节点的配置中的 `p2p.persistent_peers` 设置为所有节点的 `ID@IP:PORT` 的逗号分隔列表。默认端口是 26656。
 
-Then start the node
+然后启动节点
 
 ```
 tendermint node --proxy_app=kvstore
 ```
 
-After a few seconds, all the nodes should connect to each other and
-start making blocks! For more information, see the Tendermint Networks
-section of [the guide to using Tendermint](../tendermint-core/using-tendermint.md).
+几秒钟后，所有的节点应该互相连接并开始创建块！有关更多信息，请参阅[Tendermint 使用指南](../tendermint-core/using-tendermint.md)的 Tendermint 网络部分。
 
-But wait! Steps 3, 4 and 5 are quite manual. Instead, use the `tendermint testnet` command. By default, running `tendermint testnet` will create all the
-required files, but it won't populate the list of persistent peers. It will do
-it however if you provide the `--populate-persistent-peers` flag and optional
-`--starting-ip-address` flag. Run `tendermint testnet --help` for more details
-on the available flags.
+但是等等！步骤3、4和5非常手动。相反，使用 `tendermint testnet` 命令。默认情况下，运行 `tendermint testnet` 将创建所有需要的文件，但它不会填充持久节点列表。但是，如果您提供了 `--populate-persistent-peers` 标志和可选的 `--starting-ip-address` 标志，它就会这样做。运行 `tendermint testnet --help` 以获得更多关于可用标志的详细信息。
 
 ```
 tendermint testnet --populate-persistent-peers --starting-ip-address 192.168.0.1
 ```
 
-This command will generate four folders, prefixed with "node" and put them into
-the "./mytestnet" directory by default.
+此命令将生成四个文件夹，并以“node”为前缀，将它们放入 "./mytestnet" 目录作为默认目录。
 
-As you might imagine, this command is useful for manual or automated
-deployments.
+可以想象，这个命令对于手动或自动部署非常有用。
 
-## Automated Deployments
+## 自动部署
 
-The easiest and fastest way to get a testnet up in less than 5 minutes.
+最简单和最快的方法，获得一个测试网络不到5分钟。
 
-### Local
+### 本地
 
-With `docker` and `docker-compose` installed, run the command:
+安装 `docker` 和 `docker-compose` 后，运行以下命令：
 
 ```
 make localnet-start
 ```
 
-from the root of the tendermint repository. This will spin up a 4-node
-local testnet. Note that this command expects a linux binary in the build directory. 
-If you built the binary using a non-linux OS, you may see 
-the error `Binary needs to be OS linux, ARCH amd64`, in which case you can
-run:
+来自 tendermint 存储库的根目录。这将启动一个 4 节点的本地测试网络。注意，该命令期望 build 目录中有一个 linux 二进制文件。
+如果您使用非 linux 操作系统构建二进制文件，您可能会看到错误 `Binary needs to be OS linux, ARCH amd64`，在这种情况下，您可以运行:
 
 ```
 make build-linux
 make localnet-start
 ```
 
-Review the target in the Makefile to debug any problems.
+检查 Makefile 中的目标以调试任何问题。
 
-### Cloud
+### 云端
 
-See the [next section](./terraform-and-ansible.md) for details.
+有关详细信息，请参见[下一节](./terraform-and-ansible.md)。

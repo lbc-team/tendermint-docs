@@ -1,9 +1,7 @@
-# Overview
+# 概述
 
-Use [Docker Compose](./docker-compose.md) to spin up Tendermint testnets on your
-local machine.
+使用[Docker Compose](./docker-compose.md)在本地机器上启动 Tendermint 测试网。
 
-Use [Terraform and Ansible](./terraform-and-ansible.md) to deploy Tendermint
-testnets to the cloud.
+使用 [Terraform 和 Ansible](./terraform-and-ansible.md) 将 Tendermint 测试网络部署到云端。
 
-See the `tendermint testnet --help` command for more help initializing testnets.
+有关初始化测试网络的更多帮助，请参见 `tendermint testnet --help` 命令。
