@@ -12,5 +12,6 @@
 | spec/*            | 认领 | 小熊bill |        |      |
 | networks/*        | 认领 | 小熊bill |        |      |
 | tools/*           | 认领 | 小熊bill |        |      |
+| app-dev/*         | 认领 | 小熊bill |        |      |
 
 

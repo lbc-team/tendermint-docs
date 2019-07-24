@@ -1,104 +1,53 @@
-# Application Development Guide
+# 应用程序开发指南
 
 ## XXX
 
-This page is undergoing deprecation. All content is being moved to the new [home
-of the ABCI specification](../spec/abci/README.md).
+这个页面正在被弃用。所有内容都被转移到新的 [ABCI 规范的主页](../spec/abci/README.md)。
 
-## ABCI Design
+## ABCI 设计
 
-The purpose of ABCI is to provide a clean interface between state
-transition machines on one computer and the mechanics of their
-replication across multiple computers. The former we call 'application
-logic' and the latter the 'consensus engine'. Application logic
-validates transactions and optionally executes transactions against some
-persistent state. A consensus engine ensures all transactions are
-replicated in the same order on every machine. We call each machine in a
-consensus engine a 'validator', and each validator runs the same
-transactions through the same application logic. In particular, we are
-interested in blockchain-style consensus engines, where transactions are
-committed in hash-linked blocks.
+ABCI 的目的是在一台计算机上的状态转换机器和它们在多台计算机上的复制机制之间提供一个干净的接口。前者称为“应用逻辑”，后者称为“共识引擎”。应用程序逻辑验证交易，并根据某些持久状态选择性地执行交易。共识引擎确保在每台机器上以相同的顺序复制所有交易。我们将共识引擎中的每台机器称为“验证者”，并且每个验证者通过相同的应用程序逻辑运行相同的交易。特别是，我们对块链样式的一致性引擎感兴趣，在这种引擎中，交易以哈希链接的块提交。
 
-The ABCI design has a few distinct components:
+ABCI 设计有几个不同的组件：
 
-- message protocol
-  - pairs of request and response messages
-  - consensus makes requests, application responds
-  - defined using protobuf
-- server/client
-  - consensus engine runs the client
-  - application runs the server
-  - two implementations:
-    - async raw bytes
+- 消息协议
+  - 请求和响应消息对
+  - 共识提出请求，应用程序作出响应
+  - 使用 protobuf 定义
+- 服务器/客户端
+  - 共识引擎运行客户端
+  - 应用程序运行服务器
+  - 两种实现：
+    - 异步原始字节
     - grpc
-- blockchain protocol
-  - abci is connection oriented
-  - Tendermint Core maintains three connections:
-    - [mempool connection](#mempool-connection): for checking if
-      transactions should be relayed before they are committed;
-      only uses `CheckTx`
-    - [consensus connection](#consensus-connection): for executing
-      transactions that have been committed. Message sequence is
-      -for every block -`BeginBlock, [DeliverTx, ...], EndBlock, Commit`
-    - [query connection](#query-connection): for querying the
-      application state; only uses Query and Info
+- 区块链协议
+  - abci 是面向连接的
+  - Tendermint Core 保持三个连接：
+    - [内存池连接](#mempool-connection): 检查交易在提交前是否应转接；只使用 `CheckTx`
+    - [共识连接](#consensus-connection): 用于执行已提交的交易。对于每个块的消息序列 - `BeginBlock, [DeliverTx, ...], EndBlock, Commit`
+    - [查询连接](#query-connection): 查询应用程式状态；只使用 `Query` 和 `Info`
 
-The mempool and consensus logic act as clients, and each maintains an
-open ABCI connection with the application, which hosts an ABCI server.
-Shown are the request and response types sent on each connection.
+内存池和共识逻辑充当客户端，每个都维护一个与应用程序的开放 ABCI 连接，应用程序托管一个 ABCI 服务器。
+显示的是在每个连接上发送的请求和响应类型。
 
-Most of the examples below are from [kvstore
-application](https://github.com/tendermint/tendermint/blob/develop/abci/example/kvstore/kvstore.go),
-which is a part of the abci repo. [persistent_kvstore
-application](https://github.com/tendermint/tendermint/blob/develop/abci/example/kvstore/persistent_kvstore.go)
-is used to show `BeginBlock`, `EndBlock` and `InitChain` example
-implementations.
+下面的大多数示例来自 [kvstore 应用程序](https://github.com/tendermint/tendermint/blob/develop/abci/example/kvstore/kvstore.go)，它是 abci 库的一部分。[persistent_kvstore 应用程序](https://github.com/tendermint/tendermint/blob/develop/abci/example/kvstore/persistent_kvstore.go)用于显示 `BeginBlock`、`EndBlock` 和 `InitChain` 示例实现。
 
-## Blockchain Protocol
+## 区块链协议
 
-In ABCI, a transaction is simply an arbitrary length byte-array. It is
-the application's responsibility to define the transaction codec as they
-please, and to use it for both CheckTx and DeliverTx.
+在 ABCI 中，交易只是一个任意长度的字节数组。应用程序有责任按照自己的意愿定义交易编解码器，并将其用于 CheckTx 和 DeliverTx。
 
-Note that there are two distinct means for running transactions,
-corresponding to stages of 'awareness' of the transaction in the
-network. The first stage is when a transaction is received by a
-validator from a client into the so-called mempool or transaction pool
--this is where we use CheckTx. The second is when the transaction is
-successfully committed on more than 2/3 of validators - where we use
-DeliverTx. In the former case, it may not be necessary to run all the
-state transitions associated with the transaction, as the transaction
-may not ultimately be committed until some much later time, when the
-result of its execution will be different. For instance, an Ethereum
-ABCI app would check signatures and amounts in CheckTx, but would not
-actually execute any contract code until the DeliverTx, so as to avoid
-executing state transitions that have not been finalized.
+请注意，运行交易有两种不同的方法，它们对应于网络中交易的“感知”阶段。第一个阶段是验证者将交易从客户端接收到所谓的内存池或交易池 - 这是我们使用 CheckTx 的地方。第二个是当交易在超过 2/3 的验证者上成功提交时 - 我们使用 DeliverTx。在前一种情况下，可能没有必要运行与交易关联的所有状态转换，因为交易可能直到很久以后才最终提交，那时它的执行结果将有所不同。例如，Ethereum ABCI 应用程序将检查 CheckTx 中的签名和金额，但在 DeliverTx 之前不会实际执行任何合约代码，以避免执行尚未完成的状态转换。
 
-To formalize the distinction further, two explicit ABCI connections are
-made between Tendermint Core and the application: the mempool connection
-and the consensus connection. We also make a third connection, the query
-connection, to query the local state of the app.
+为了进一步形式化区分，我们在 Tendermint Core 和应用程序之间建立了两个显式的 ABCI 连接：内存池连接和共识连接。我们还建立了第三个连接，即查询连接，来查询应用程序的本地状态。
 
-### Mempool Connection
+### 内存池连接
 
-The mempool connection is used _only_ for CheckTx requests. Transactions
-are run using CheckTx in the same order they were received by the
-validator. If the CheckTx returns `OK`, the transaction is kept in
-memory and relayed to other peers in the same order it was received.
-Otherwise, it is discarded.
+内存池连接仅用于 CheckTx 请求。使用 CheckTx 运行交易的顺序与验证者接收交易的顺序相同。如果 CheckTx 返回 `OK`，交易将保存在内存中，并按照接收到交易的相同顺序转发给其他节点。
+否则，它将被丢弃。
 
-CheckTx requests run concurrently with block processing; so they should
-run against a copy of the main application state which is reset after
-every block. This copy is necessary to track transitions made by a
-sequence of CheckTx requests before they are included in a block. When a
-block is committed, the application must ensure to reset the mempool
-state to the latest committed state. Tendermint Core will then filter
-through all transactions in the mempool, removing any that were included
-in the block, and re-run the rest using CheckTx against the post-Commit
-mempool state (this behaviour can be turned off with
-`[mempool] recheck = false`).
+CheckTx 请求与块处理并行运行；因此，它们应该针对主应用程序状态的副本运行，该副本在每个块之后重置。在将 CheckTx 请求序列包含在一个块中之前，跟踪它们所做的转换需要这个副本。提交块时，应用程序必须确保将内存池状态重置为最新提交的状态。然后，Tendermint Core 将过滤内存池中的所有交易，删除块中包含的所有交易，然后使用 CheckTx 针对提交后的内存池状态重新运行其余的交易(这种行为可以用 `[mempool] recheck = false` 关闭)。
 
-In go:
+在 go 中：
 
 ```
 func (app *KVStoreApplication) CheckTx(tx []byte) types.Result {
@@ -106,7 +55,7 @@ func (app *KVStoreApplication) CheckTx(tx []byte) types.Result {
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 ResponseCheckTx requestCheckTx(RequestCheckTx req) {
@@ -122,49 +71,27 @@ ResponseCheckTx requestCheckTx(RequestCheckTx req) {
 }
 ```
 
-### Replay Protection
+### 重放保护
 
-To prevent old transactions from being replayed, CheckTx must implement
-replay protection.
+为了防止旧交易被重放，CheckTx 必须实现重放保护。
 
-Tendermint provides the first defence layer by keeping a lightweight
-in-memory cache of 100k (`[mempool] cache_size`) last transactions in
-the mempool. If Tendermint is just started or the clients sent more than
-100k transactions, old transactions may be sent to the application. So
-it is important CheckTx implements some logic to handle them.
+Tendermint 提供了第一个防御层，它在内存中保留了一个轻量级缓存，大小为100k (`[mempool] cache_size`)，这是内存池中的最后所有交易。如果 Tendermint 刚刚启动或客户发送的交易超过 10 万笔，则可以将旧交易发送到应用程序中。因此，CheckTx 实现一些逻辑来处理它们是很重要的。
 
-There are cases where a transaction will (or may) become valid in some
-future state, in which case you probably want to disable Tendermint's
-cache. You can do that by setting `[mempool] cache_size = 0` in the
-config.
+在某些情况下，交易将(或可能)在未来的某个状态下变得有效，在这种情况下，您可能希望禁用 Tendermint 的缓存。您可以通过在配置中设置 `[mempool] cache_size = 0` 来实现这一点。
 
-### Consensus Connection
+### 共识连接
 
-The consensus connection is used only when a new block is committed, and
-communicates all information from the block in a series of requests:
-`BeginBlock, [DeliverTx, ...], EndBlock, Commit`. That is, when a block
-is committed in the consensus, we send a list of DeliverTx requests (one
-for each transaction) sandwiched by BeginBlock and EndBlock requests,
-and followed by a Commit.
+只有在提交了一个新块时才使用共识连接，并通过一系列请求来传递来自该块的所有信息：`BeginBlock, [DeliverTx, ...], EndBlock, Commit`。也就是说，当在共识中提交一个块时，我们发送一个 DeliverTx 请求列表(每个交易一个)，它被 BeginBlock 和 EndBlock 请求夹在中间，然后提交。
 
 ### DeliverTx
 
-DeliverTx is the workhorse of the blockchain. Tendermint sends the
-DeliverTx requests asynchronously but in order, and relies on the
-underlying socket protocol (ie. TCP) to ensure they are received by the
-app in order. They have already been ordered in the global consensus by
-the Tendermint protocol.
+DeliverTx 是区块链的主力。Tendermint 异步但有序地发送 DeliverTx 请求，并依赖于底层套接字协议(即 TCP)确保应用程序按顺序接收它们。他们已经在 Tendermint 协议的全球共识中排序。
 
-DeliverTx returns a abci.Result, which includes a Code, Data, and Log.
-The code may be non-zero (non-OK), meaning the corresponding transaction
-should have been rejected by the mempool, but may have been included in
-a block by a Byzantine proposer.
+DeliverTx 返回一个 abci.Result，其中包括代码、数据和日志。代码可能是非零的(non-OK)，这意味着相应的交易应该被内存池拒绝，但是可能被拜占庭提议者包含在一个块中。
 
-The block header will be updated (TODO) to include some commitment to
-the results of DeliverTx, be it a bitarray of non-OK transactions, or a
-merkle root of the data returned by the DeliverTx requests, or both.
+块头将被更新(TODO)，以包含对 DeliverTx 结果的一些承诺，可以是一个由 non-OK 交易组成的位数组，也可以是 DeliverTx 请求返回的数据的默克尔根，或者两者兼有。
 
-In go:
+在 go 中：
 
 ```
 // tx is either "key=value" or just arbitrary bytes
@@ -179,7 +106,7 @@ func (app *KVStoreApplication) DeliverTx(tx []byte) types.Result {
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 /**
@@ -201,26 +128,13 @@ ResponseDeliverTx deliverTx(RequestDeliverTx request) {
 
 ### Commit
 
-Once all processing of the block is complete, Tendermint sends the
-Commit request and blocks waiting for a response. While the mempool may
-run concurrently with block processing (the BeginBlock, DeliverTxs, and
-EndBlock), it is locked for the Commit request so that its state can be
-safely reset during Commit. This means the app _MUST NOT_ do any
-blocking communication with the mempool (ie. broadcast_tx) during
-Commit, or there will be deadlock. Note also that all remaining
-transactions in the mempool are replayed on the mempool connection
-(CheckTx) following a commit.
+一旦块的所有处理完成，Tendermint 发送提交请求和等待响应的块。虽然内存池可以与块处理(BeginBlock、DeliverTxs 和 EndBlock)并发运行，但它会为提交请求锁定，以便在提交期间安全地重置其状态。这意味着应用程序 _因该不_ 做任何阻塞通信与内存池(即 broadcast_tx)在提交期间，否则将会出现死锁。还要注意，在提交之后，内存池中的所有剩余交易都将在内存池连接(CheckTx)上重播。
 
-The app should respond to the Commit request with a byte array, which is
-the deterministic state root of the application. It is included in the
-header of the next block. It can be used to provide easily verified
-Merkle-proofs of the state of the application.
+应用程序应该用字节数组响应提交请求，字节数组是应用程序的确定状态根。它包含在下一个块的头中。它可以用来提供应用程序状态的容易验证的默克尔证明。
 
-It is expected that the app will persist state to disk on Commit. The
-option to have all transactions replayed from some previous block is the
-job of the [Handshake](#handshake).
+预计应用程序将在提交时将状态持久化到磁盘。让所有交易从以前的某个块重播的选项是[Handshake](#handshake)的工作。
 
-In go:
+在 go 中：
 
 ```
 func (app *KVStoreApplication) Commit() types.Result {
@@ -229,7 +143,7 @@ func (app *KVStoreApplication) Commit() types.Result {
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 ResponseCommit requestCommit(RequestCommit requestCommit) {
@@ -244,15 +158,11 @@ ResponseCommit requestCommit(RequestCommit requestCommit) {
 
 ### BeginBlock
 
-The BeginBlock request can be used to run some code at the beginning of
-every block. It also allows Tendermint to send the current block hash
-and header to the application, before it sends any of the transactions.
+BeginBlock 请求可用于在每个块的开头运行一些代码。它还允许 Tendermint 在发送任何交易之前向应用程序发送当前块哈希和头。
 
-The app should remember the latest height and header (ie. from which it
-has run a successful Commit) so that it can tell Tendermint where to
-pick up from when it restarts. See information on the Handshake, below.
+应用程序应该记住最新的高度和标题(即它从其中成功地执行了一次提交)。这样，它就可以告诉 Tendermint 在重启时从哪里开始。参见下面关于握手的信息。
 
-In go:
+在 go 中：
 
 ```
 // Track the block hash and header information
@@ -265,7 +175,7 @@ func (app *PersistentKVStoreApplication) BeginBlock(params types.RequestBeginBlo
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 /*
@@ -286,19 +196,10 @@ ResponseBeginBlock requestBeginBlock(RequestBeginBlock req) {
 
 ### EndBlock
 
-The EndBlock request can be used to run some code at the end of every block.
-Additionally, the response may contain a list of validators, which can be used
-to update the validator set. To add a new validator or update an existing one,
-simply include them in the list returned in the EndBlock response. To remove
-one, include it in the list with a `power` equal to `0`. Validator's `address`
-field can be left empty. Tendermint core will take care of updating the
-validator set. Note the change in voting power must be strictly less than 1/3
-per block if you want a light client to be able to prove the transition
-externally. See the [light client
-docs](https://godoc.org/github.com/tendermint/tendermint/lite#hdr-How_We_Track_Validators)
-for details on how it tracks validators.
+EndBlock 请求可用于在每个块的末尾运行一些代码。
+此外，响应可能包含一个验证者列表，可用来更新验证者集。要添加新的验证者或更新现有的验证者，只需将它们包含在 EndBlock 响应中返回的列表中。若要删除其中一个，请将其以 `power` 等于 `0` 的形式包含在列表中。验证者的 `address` 字段可以留空。Tendermint core 将负责更新验证者集。请注意，如果您希望轻客户端能够从外部证明转换，那么每个区块的投票权变化必须严格小于 1/3。有关它如何跟踪验证者的详细信息，请参阅[轻客户端文档](https://godoc.org/github.com/tendermint/tendermint/lite#hdr-How_We_Track_Validators)。
 
-In go:
+在 go 中：
 
 ```
 // Update the validator set
@@ -307,7 +208,7 @@ func (app *PersistentKVStoreApplication) EndBlock(req types.RequestEndBlock) typ
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 /*
@@ -324,27 +225,18 @@ ResponseEndBlock requestEndBlock(RequestEndBlock req) {
 }
 ```
 
-### Query Connection
+### 查询连接
 
-This connection is used to query the application without engaging
-consensus. It's exposed over the tendermint core rpc, so clients can
-query the app without exposing a server on the app itself, but they must
-serialize each query as a single byte array. Additionally, certain
-"standardized" queries may be used to inform local decisions, for
-instance about which peers to connect to.
+此连接用于查询应用程序，而不涉及共识。它是通过 tendermint core rpc 公开的，因此客户端可以在不公开应用程序本身上的服务器的情况下查询应用程序，但是他们必须将每个查询序列化为单个字节数组。此外，某些“标准化”查询可能用于通知本地决策，例如要连接到哪个节点。
 
-Tendermint Core currently uses the Query connection to filter peers upon
-connecting, according to IP address or node ID. For instance,
-returning non-OK ABCI response to either of the following queries will
-cause Tendermint to not connect to the corresponding peer:
+Tendermint Core 目前使用查询连接根据 IP 地址或节点 ID 对连接后的节点进行过滤。例如，如果对以下任意一个查询返回 non-OK ABCI 响应，都会导致 Tendermint 无法连接到对应的节点：
 
-- `p2p/filter/addr/<ip addr>`, where `<ip addr>` is an IP address.
-- `p2p/filter/id/<id>`, where `<is>` is the hex-encoded node ID (the hash of
-  the node's p2p pubkey).
+- `p2p/filter/addr/<ip addr>`, 其中 `<ip addr>` 是一个 IP 地址。
+- `p2p/filter/id/<id>`， 其中 `<is>` 是十六进制编码的节点 ID(节点的 p2p 公钥的哈希)。
 
-Note: these query formats are subject to change!
+注意：这些查询格式可能会更改！
 
-In go:
+在 go 中：
 
 ```
     func (app *KVStoreApplication) Query(reqQuery types.RequestQuery) (resQuery types.ResponseQuery) {
@@ -387,7 +279,7 @@ In go:
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
     ResponseQuery requestQuery(RequestQuery req) {
@@ -421,21 +313,13 @@ In Java:
 
 ### Handshake
 
-When the app or tendermint restarts, they need to sync to a common
-height. When an ABCI connection is first established, Tendermint will
-call `Info` on the Query connection. The response should contain the
-LastBlockHeight and LastBlockAppHash - the former is the last block for
-which the app ran Commit successfully, the latter is the response from
-that Commit.
+当应用程序或 tendermint 重新启动时，它们需要同步到一个共同的高度。当 ABCI 连接首次建立时，Tendermint 将在查询连接上调用 `Info`。响应应该包含LastBlockHeight 和 LastBlockAppHash - 前者是应用程序成功运行提交的最后一个块，后者是该提交的响应。
 
-Using this information, Tendermint will determine what needs to be
-replayed, if anything, against the app, to ensure both Tendermint and
-the app are synced to the latest block height.
+使用这些信息，Tendermint 将确定需要对应用程序重放什么内容(如果有的话)，以确保 Tendermint 和应用程序都同步到最新的块高度。
 
-If the app returns a LastBlockHeight of 0, Tendermint will just replay
-all blocks.
+如果应用程序返回 LastBlockHeight 为 0，Tendermint 将重新播放所有块。
 
-In go:
+在 go 中：
 
 ```
 func (app *KVStoreApplication) Info(req types.RequestInfo) (resInfo types.ResponseInfo) {
@@ -443,7 +327,7 @@ func (app *KVStoreApplication) Info(req types.RequestInfo) (resInfo types.Respon
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 ResponseInfo requestInfo(RequestInfo req) {
@@ -455,11 +339,9 @@ ResponseInfo requestInfo(RequestInfo req) {
 
 ### Genesis
 
-`InitChain` will be called once upon the genesis. `params` includes the
-initial validator set. Later on, it may be extended to take parts of the
-consensus params.
+`InitChain` 将在创世中被调用一次。`params` 包括初始验证者集。稍后，它可能会扩展为包含部分共识参数。
 
-In go:
+在 go 中：
 
 ```
 // Save the validators in the merkle tree
@@ -473,7 +355,7 @@ func (app *PersistentKVStoreApplication) InitChain(params types.RequestInitChain
 }
 ```
 
-In Java:
+在 Java 中：
 
 ```
 /*

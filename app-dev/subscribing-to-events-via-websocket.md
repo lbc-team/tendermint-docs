@@ -1,13 +1,10 @@
-# Subscribing to events via Websocket
+# 通过 Websocket 订阅事件
 
-Tendermint emits different events, to which you can subscribe via
-[Websocket](https://en.wikipedia.org/wiki/WebSocket). This can be useful
-for third-party applications (for analysys) or inspecting state.
+Tendermint 会发出不同的事件，您可以通过[Websocket](https://en.wikipedia.org/wiki/WebSocket)订阅这些事件。这对于第三方应用程序(如 analysys)或检查状态非常有用。
 
-[List of events](https://godoc.org/github.com/tendermint/tendermint/types#pkg-constants)
+[事件列表](https://godoc.org/github.com/tendermint/tendermint/types#pkg-constants)
 
-You can subscribe to any of the events above by calling `subscribe` RPC
-method via Websocket.
+您可以通过 Websocket 调用 `subscribe` RPC 方法订阅上面的任何事件。
 
 ```
 {
@@ -20,22 +17,15 @@ method via Websocket.
 }
 ```
 
-Check out [API docs](https://tendermint.com/rpc/) for
-more information on query syntax and other options.
+查看[API 文档](https://tendermint.com/rpc/)，了解更多关于查询语法和其他选项的信息。
 
-You can also use tags, given you had included them into DeliverTx
-response, to query transaction results. See [Indexing
-transactions](./indexing-transactions.md) for details.
+您还可以使用标记(假定您已经将它们包含到 DeliverTx 响应中)来查询交易结果。有关详细信息，请参见[索引交易](./indexing-transactions.md)。
 
 ### ValidatorSetUpdates
 
-When validator set changes, ValidatorSetUpdates event is published. The
-event carries a list of pubkey/power pairs. The list is the same
-Tendermint receives from ABCI application (see [EndBlock
-section](../spec/abci/abci.md#endblock) in
-the ABCI spec).
+当验证者集更改时，将发布 ValidatorSetUpdates 事件。该事件携带一个公钥/投票权利对列表。此列表与从 ABCI 应用程序中收到的相同(参见 ABCI 规范中的[EndBlock 部分](../spec/abci/abci.md#endblock))。
 
-Response:
+响应：
 
 ```
 {

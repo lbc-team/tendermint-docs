@@ -1,8 +1,8 @@
-# Indexing Transactions
+# 索引交易
 
-Tendermint allows you to index transactions and later query or subscribe
-to their results.
+Tendermint允许您索引交易，然后查询或订阅它们的结果。
 
+让我们来看看 `[tx_index]` 配置部分：
 Let's take a look at the `[tx_index]` config section:
 
 ```
@@ -34,17 +34,14 @@ index_tags = ""
 index_all_tags = false
 ```
 
-By default, Tendermint will index all transactions by their respective
-hashes using an embedded simple indexer. Note, we are planning to add
-more options in the future (e.g., Postgresql indexer).
+默认情况下，Tendermint 将使用嵌入的简单索引器按各自的哈希索引所有交易。注意，我们计划在将来添加更多的选项(例如：Postgresql 索引器)。
 
-## Adding tags
+## 添加标记
 
-In your application's `DeliverTx` method, add the `Tags` field with the
-pairs of UTF-8 encoded strings (e.g. "account.owner": "Bob", "balance":
-"100.0", "date": "2018-01-02").
+在应用程序的 `DeliverTx` 方法中，使用 UTF-8 编码的字符串对添加 `Tags` 字段(例如："account.owner": "Bob", "balance":
+"100.0", "date": "2018-01-02")。
 
-Example:
+例子：
 
 ```
 func (app *KVStoreApplication) DeliverTx(tx []byte) types.Result {
@@ -58,33 +55,28 @@ func (app *KVStoreApplication) DeliverTx(tx []byte) types.Result {
 }
 ```
 
-If you want Tendermint to only index transactions by "account.name" tag,
-in the config set `tx_index.index_tags="account.name"`. If you to index
-all tags, set `index_all_tags=true`
+如果您想让 Tendermint 只通过 “account.name” 标记索引交易，请在配置集中设置 `tx_index.index_tags="account.name"`。如果要索引所有标签，请设置 `index_all_tags=true`
 
-Note, there are a few predefined tags:
+注意，这里有一些预定义的标签：
 
-- `tx.hash` (transaction's hash)
-- `tx.height` (height of the block transaction was committed in)
+- `tx.hash` (交易哈希)
+- `tx.height` (交易提交的块高度)
 
-Tendermint will throw a warning if you try to use any of the above keys.
+如果您尝试使用以上任何一个键，Tendermint 都会发出警告。
 
-## Querying transactions
+## 查询交易
 
-You can query the transaction results by calling `/tx_search` RPC
-endpoint:
+您可以通过调用 `/tx_search` RPC 端点查询交易结果：
 
 ```
 curl "localhost:26657/tx_search?query=\"account.name='igor'\"&prove=true"
 ```
 
-Check out [API docs](https://tendermint.com/rpc/#txsearch)
-for more information on query syntax and other options.
+查看[API 文档](https://tendermint.com/rpc/#txsearch)，了解更多关于查询语法和其他选项的信息。
 
-## Subscribing to transactions
+## 订阅交易
 
-Clients can subscribe to transactions with the given tags via Websocket
-by providing a query to `/subscribe` RPC endpoint.
+通过向 `/subscribe` RPC 端点提供查询，客户端可以通过 Websocket 订阅具有给定标记的交易。
 
 ```
 {
@@ -97,5 +89,4 @@ by providing a query to `/subscribe` RPC endpoint.
 }
 ```
 
-Check out [API docs](https://tendermint.com/rpc/#subscribe) for
-more information on query syntax and other options.
+请查看[API 文档](https://tendermint.com/rpc/#subscribe)，以获得关于查询语法和其他选项的更多信息。

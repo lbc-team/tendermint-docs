@@ -1,367 +1,269 @@
-# ABCI Specification
+# ABCI 规范
 
 ### XXX
 
-DEPRECATED: Moved [here](../spec/abci/abci.md)
+已弃用: 移动到[这里](../spec/abci/abci.md)
 
-## Message Types
+## 消息类型
 
-ABCI requests/responses are defined as simple Protobuf messages in [this
-schema file](https://github.com/tendermint/tendermint/blob/master/abci/types/types.proto).
-TendermintCore sends the requests, and the ABCI application sends the
-responses. Here, we provide an overview of the messages types and how
-they are used by Tendermint. Then we describe each request-response pair
-as a function with arguments and return values, and add some notes on
-usage.
+ABCI 请求/响应在[这个模式文件](https://github.com/tendermint/tendermint/blob/master/abci/types/types.proto)中定义为简单的 Protobuf 消息。
+TendermintCore 发送请求，ABCI 应用程序发送响应。在这里，我们提供了一个概述的消息类型和他们是如何使用的 Tendermint。然后我们将每个请求-响应对描述为一个带有参数和返回值的函数，并添加一些用法说明。
 
-Some messages (`Echo, Info, InitChain, BeginBlock, EndBlock, Commit`),
-don't return errors because an error would indicate a critical failure
-in the application and there's nothing Tendermint can do. The problem
-should be addressed and both Tendermint and the application restarted.
-All other messages (`SetOption, Query, CheckTx, DeliverTx`) return an
-application-specific response `Code uint32`, where only `0` is reserved
-for `OK`.
+有些消息(`Echo, Info, InitChain, BeginBlock, EndBlock, Commit`)不返回错误，因为一个错误将表明应用程序出现了严重故障，Tendermint 无能为力。应该解决这个问题，重新启动 Tendermint 和应用程序。
+所有其他消息(`SetOption, Query, CheckTx, DeliverTx`)返回一个特定于应用程序的响应 `Code uint32`，其中只有 `0` 保留给 `OK`。
 
-Some messages (`SetOption, Query, CheckTx, DeliverTx`) return
-non-deterministic data in the form of `Info` and `Log`. The `Log` is
-intended for the literal output from the application's logger, while the
-`Info` is any additional info that should be returned.
+有些消息(`SetOption, Query, CheckTx, DeliverTx`)以 `Info` 和 `Log` 的形式返回非确定性数据。 `Log` 用于应用程序日志程序的文字输出，而 `Info` 是应该返回的任何附加信息。
 
-The first time a new blockchain is started, Tendermint calls
-`InitChain`. From then on, the Block Execution Sequence that causes the
-committed state to be updated is as follows:
+第一次启动一个新的区块链，Tendermint 称之为 `InitChain`。从那时起，导致提交状态更新的块执行序列如下:
 
 `BeginBlock, [DeliverTx], EndBlock, Commit`
 
-where one `DeliverTx` is called for each transaction in the block.
-Cryptographic commitments to the results of DeliverTx, EndBlock, and
-Commit are included in the header of the next block.
+块中的每个交易调用一个 `DeliverTx`。
+对 DeliverTx、EndBlock 和Commit 结果的加密承诺包含在下一个块的头中。
 
-Tendermint opens three connections to the application to handle the
-different message types:
+Tendermint 打开到应用程序的三个连接来处理不同的消息类型：
 
 - `Consensus Connection - InitChain, BeginBlock, DeliverTx, EndBlock, Commit`
 - `Mempool Connection - CheckTx`
 - `Info Connection - Info, SetOption, Query`
 
-The `Flush` message is used on every connection, and the `Echo` message
-is only used for debugging.
+`Flush` 消息用于每个连接，而 `Echo` 消息仅用于调试。
 
-Note that messages may be sent concurrently across all connections -a
-typical application will thus maintain a distinct state for each
-connection. They may be referred to as the `DeliverTx state`, the
-`CheckTx state`, and the `Commit state` respectively.
+注意，消息可以跨所有连接并发发送 - 因此，典型的应用程序将为每个连接维护不同的状态。它们可以分别称为 `DeliverTx state`、`CheckTx state` 和 `Commit state`。
 
-See below for more details on the message types and how they are used.
+有关消息类型及其使用方式的详细信息，请参阅下面。
 
-## Request/Response Messages
+## 请求/响应消息
 
 ### Echo
 
-- **Request**:
-  - `Message (string)`: A string to echo back
-- **Response**:
-  - `Message (string)`: The input string
-- **Usage**:
-  - Echo a string to test an abci client/server implementation
+- **请求**：
+  - `Message (string)`: 回显一个字符串
+- **响应**：
+  - `Message (string)`: 输入字符串
+- **用法**：
+  - 回显一个字符串来测试cabci 客户机/服务器实现
 
 ### Flush
 
-- **Usage**:
-  - Signals that messages queued on the client should be flushed to
-    the server. It is called periodically by the client
-    implementation to ensure asynchronous requests are actually
-    sent, and is called immediately to make a synchronous request,
-    which returns when the Flush response comes back.
+- **用法**：
+  - 将客户端上排队的消息刷新到服务器的信号。客户端实现定期调用它，以确保实际发送异步请求，并立即调用它来发出同步请求，当刷新响应返回时，同步请求将返回。
 
 ### Info
 
-- **Request**:
-  - `Version (string)`: The Tendermint version
-- **Response**:
-  - `Data (string)`: Some arbitrary information
-  - `Version (Version)`: Version information
-  - `LastBlockHeight (int64)`: Latest block for which the app has
-    called Commit
-  - `LastBlockAppHash ([]byte)`: Latest result of Commit
-- **Usage**:
-  - Return information about the application state.
-  - Used to sync Tendermint with the application during a handshake
-    that happens on startup.
-  - Tendermint expects `LastBlockAppHash` and `LastBlockHeight` to
-    be updated during `Commit`, ensuring that `Commit` is never
-    called twice for the same block height.
+- **请求**：
+  - `Version (string)`: Tendermint 版本
+- **Response**：
+  - `Data (string)`: 任意信息
+  - `Version (Version)`: 版本信息
+  - `LastBlockHeight (int64)`: 应用程序调用提交的最新块
+  - `LastBlockAppHash ([]byte)`: 提交的最新结果
+- **用法**：
+  - 返回关于应用程序状态的信息。
+  - 用于在启动时握手时将 Tendermint 与应用程序同步。
+  - Tendermint希望在 `Commit` 期间更新 `LastBlockAppHash` 和`LastBlockHeight`，确保 `Commit` 不会因为相同的块高度被调用两次。
 
 ### SetOption
 
-- **Request**:
-  - `Key (string)`: Key to set
-  - `Value (string)`: Value to set for key
-- **Response**:
-  - `Code (uint32)`: Response code
-  - `Log (string)`: The output of the application's logger. May
-    be non-deterministic.
-  - `Info (string)`: Additional information. May
-    be non-deterministic.
-- **Usage**:
-  - Set non-consensus critical application specific options.
-  - e.g. Key="min-fee", Value="100fermion" could set the minimum fee
-    required for CheckTx (but not DeliverTx - that would be
-    consensus critical).
+- **请求**：
+  - `Key (string)`: 设置键
+  - `Value (string)`: 设置键的值
+- **响应**：
+  - `Code (uint32)`: 响应码
+  - `Log (string)`: 应用程序日志程序的输出。可能是不确定的。
+  - `Info (string)`: 附加信息。可能是不确定的。
+- **用法**：
+  - 设置非一致的关键应用程序特定选项。
+  - 例如 Key="min-fee"， Value="100fermion" 可以设置 CheckTx 所需的最低费用(但不包括 DeliverTx - 这是至关重要的共识)。
 
 ### InitChain
 
-- **Request**:
-  - `Time (google.protobuf.Timestamp)`: Genesis time.
-  - `ChainID (string)`: ID of the blockchain.
-  - `ConsensusParams (ConsensusParams)`: Initial consensus-critical parameters.
-  - `Validators ([]ValidatorUpdate)`: Initial genesis validators.
-  - `AppStateBytes ([]byte)`: Serialized initial application state. Amino-encoded JSON bytes.
-- **Response**:
-  - `ConsensusParams (ConsensusParams)`: Initial
-    consensus-critical parameters.
-  - `Validators ([]ValidatorUpdate)`: Initial validator set (if non empty).
-- **Usage**:
-  - Called once upon genesis.
-  - If ResponseInitChain.Validators is empty, the initial validator set will be the RequestInitChain.Validators
-  - If ResponseInitChain.Validators is not empty, the initial validator set will be the
-    ResponseInitChain.Validators (regardless of what is in RequestInitChain.Validators).
-  - This allows the app to decide if it wants to accept the initial validator
-    set proposed by tendermint (ie. in the genesis file), or if it wants to use
-    a different one (perhaps computed based on some application specific
-    information in the genesis file).
+- **请求**：
+  - `Time (google.protobuf.Timestamp)`: 创世时间。
+  - `ChainID (string)`: 区块链 ID。
+  - `ConsensusParams (ConsensusParams)`: 初始至关重要的共识参数。
+  - `Validators ([]ValidatorUpdate)`: 初始创世的验证者。
+  - `AppStateBytes ([]byte)`: 序列化的初始应用程序状态。Amino 编码 JSON 字节。
+- **响应**：
+  - `ConsensusParams (ConsensusParams)`: 初始至关重要的共识参数。
+  - `Validators ([]ValidatorUpdate)`: 初始的验证者集(如果不为空)。
+- **用法**：
+  - 创世时调用一次。
+  - 如果 ResponseInitChain.Validators 为空，初始验证者集将是 RequestInitChain.Validators
+  - 如果 ResponseInitChain.Validators 不是空的，初始验证者集将是 ResponseInitChain.Validators(不管 ResponseInitChain.Validators 中有什么)。
+  - 这允许应用程序决定是否接受 tendermint (即在创世文件中），或者，如果它想使用另一种方法(可能基于创世文件中的某些应用程序特定信息计算)。
 
 ### Query
 
-- **Request**:
-  - `Data ([]byte)`: Raw query bytes. Can be used with or in lieu
-    of Path.
-  - `Path (string)`: Path of request, like an HTTP GET path. Can be
-    used with or in liue of Data.
-  - Apps MUST interpret '/store' as a query by key on the
-    underlying store. The key SHOULD be specified in the Data field.
-  - Apps SHOULD allow queries over specific types like
-    '/accounts/...' or '/votes/...'
-  - `Height (int64)`: The block height for which you want the query
-    (default=0 returns data for the latest committed block). Note
-    that this is the height of the block containing the
-    application's Merkle root hash, which represents the state as it
-    was after committing the block at Height-1
-  - `Prove (bool)`: Return Merkle proof with response if possible
-- **Response**:
-  - `Code (uint32)`: Response code.
-  - `Log (string)`: The output of the application's logger. May
-    be non-deterministic.
-  - `Info (string)`: Additional information. May
-    be non-deterministic.
-  - `Index (int64)`: The index of the key in the tree.
-  - `Key ([]byte)`: The key of the matching data.
-  - `Value ([]byte)`: The value of the matching data.
-  - `Proof ([]byte)`: Proof for the data, if requested.
-  - `Height (int64)`: The block height from which data was derived.
-    Note that this is the height of the block containing the
-    application's Merkle root hash, which represents the state as it
-    was after committing the block at Height-1
-- **Usage**:
-  - Query for data from the application at current or past height.
-  - Optionally return Merkle proof.
+- **请求**：
+  - `Data ([]byte)`: 原始查询字节。可与 Path 一起使用。
+  - `Path (string)`: 请求路径，如 HTTP GET 路径。可以与数据一起使用。
+  - 应用程序必须将 '/store' 解释为基础商店上的按键查询。密钥应该在 Data 字段中指定。
+  - 应用程序应该允许对特定类型的查询，如 '/accounts/...' 或者 '/votes/...'
+  - `Height (int64)`: 您希望查询的块高度(缺省值为 0，返回最新提交块的数据)。注意，这是包含应用程序的默克尔根哈希的块的高度，它表示在以 height-1 提交块后的状态
+  - `Prove (bool)`: 如果可能，返回默克尔证明与回应
+- **响应**：
+  - `Code (uint32)`: 响应码。
+  - `Log (string)`: 应用程序日志程序的输出。可能是不确定的。
+  - `Info (string)`: 附加信息。可能是不确定的。
+  - `Index (int64)`: 键在树中的索引。
+  - `Key ([]byte)`: 匹配数据的键。
+  - `Value ([]byte)`: 匹配数据的值。
+  - `Proof ([]byte)`: 如有需要，提供有关数据的证明。
+  - `Height (int64)`: 派生数据的块的高度。注意，这是包含应用程序的默克尔根哈希的块的高度，它表示在以 height-1 提交块后的状态
+- **用法**：
+  - 查询应用程序当前或过去高度的数据。
+  - 可选地返回默克尔证明。
 
 ### BeginBlock
 
-- **Request**:
-  - `Hash ([]byte)`: The block's hash. This can be derived from the
-    block header.
-  - `Header (struct{})`: The block header.
-  - `LastCommitInfo (LastCommitInfo)`: Info about the last commit, including the
-    round, and the list of validators and which ones signed the last block.
-  - `ByzantineValidators ([]Evidence)`: List of evidence of
-    validators that acted maliciously.
-- **Response**:
-  - `Tags ([]cmn.KVPair)`: Key-Value tags for filtering and indexing
-- **Usage**:
-  - Signals the beginning of a new block. Called prior to
-    any DeliverTxs.
-  - The header contains the height, timestamp, and more - it exactly matches the
-    Tendermint block header. We may seek to generalize this in the future.
-  - The `LastCommitInfo` and `ByzantineValidators` can be used to determine
-    rewards and punishments for the validators. NOTE validators here do not
-    include pubkeys.
+- **请求**：
+  - `Hash ([]byte)`: 块的哈希。这可以从块头派生。
+  - `Header (struct{})`: 块头。
+  - `LastCommitInfo (LastCommitInfo)`: 关于最后一次提交的信息，包括轮、验证者列表以及哪些验证者签署了最后一个块。
+  - `ByzantineValidators ([]Evidence)`: 验证者恶意行为的证据列表。
+- **响应**：
+  - `Tags ([]cmn.KVPair)`: 用于过滤和索引的键值标记
+- **用法**：
+  - 表示一个新块的开始。在任何 DeliverTxs 之前调用。
+  - 标头包含高度、时间戳等—它与 Tendermint 块标头完全匹配。我们可能在将来寻求推广这一点。
+  - `LastCommitInfo` 和 `ByzantineValidators` 可用于确定验证者的奖惩。注意，这里的验证者不包括公钥。
 
 ### CheckTx
 
-- **Request**:
-  - `Tx ([]byte)`: The request transaction bytes
-- **Response**:
-  - `Code (uint32)`: Response code
-  - `Data ([]byte)`: Result bytes, if any.
-  - `Log (string)`: The output of the application's logger. May
-    be non-deterministic.
-  - `Info (string)`: Additional information. May
-    be non-deterministic.
-  - `GasWanted (int64)`: Amount of gas request for transaction.
-  - `GasUsed (int64)`: Amount of gas consumed by transaction.
-  - `Tags ([]cmn.KVPair)`: Key-Value tags for filtering and indexing
-    transactions (eg. by account).
-- **Usage**: Validate a mempool transaction, prior to broadcasting
-  or proposing. CheckTx should perform stateful but light-weight
-  checks of the validity of the transaction (like checking signatures
-  and account balances), but need not execute in full (like running a
-  smart contract).
+- **请求**：
+  - `Tx ([]byte)`: 请求交易字节
+- **响应**：
+  - `Code (uint32)`: 响应码
+  - `Data ([]byte)`: 结果字节，如果有的话。
+  - `Log (string)`: 应用程序日志程序的输出。可能是不确定的。
+  - `Info (string)`: 附加信息。可能是不确定的。
+  - `GasWanted (int64)`: 请求交易的气体量。
+  - `GasUsed (int64)`: 交易消耗的气体量。
+  - `Tags ([]cmn.KVPair)`: 用于过滤和索引交易的键值标记(例如。通过账户)。
+- **用法**： 在广播或提议之前验证内存池交易。CheckTx 应该执行有状态但轻量级的交易有效性检查(如检查签名和帐户余额)，但不需要完全执行(如运行智能合约)。
 
-  Tendermint runs CheckTx and DeliverTx concurrently with eachother,
-  though on distinct ABCI connections - the mempool connection and the
-  consensus connection, respectively.
+  Tendermint 彼此同时运行 CheckTx 和 DeliverTx，但使用的是不同的 ABCI 连接 - 内存池连接和共识连接。
 
-  The application should maintain a separate state to support CheckTx.
-  This state can be reset to the latest committed state during
-  `Commit`. Before calling Commit, Tendermint will lock and flush the mempool,
-  ensuring that all existing CheckTx are responded to and no new ones can
-  begin. After `Commit`, the mempool will rerun
-  CheckTx for all remaining transactions, throwing out any that are no longer valid.
-  Then the mempool will unlock and start sending CheckTx again.
+  应用程序应该维护一个单独的状态来支持 CheckTx。
+  此状态可以在 `Commit` 期间重置为最新提交状态。在调用提交之前，Tendermint 将锁定并刷新内存池，确保所有现有的 CheckTx 都得到响应，并且不能开始新的CheckTx。在 `Commit` 之后，内存池将为所有剩余的交易重新运行 CheckTx，抛出任何不再有效的交易。
+  然后内存池将解锁并再次开始发送 CheckTx。
 
-  Keys and values in Tags must be UTF-8 encoded strings (e.g.
-  "account.owner": "Bob", "balance": "100.0", "date": "2018-01-02")
+  标签中的键和值必须是 UTF-8 编码的字符串(例如："account.owner": "Bob", "balance": "100.0", "date": "2018-01-02")
 
 ### DeliverTx
 
-- **Request**:
-  - `Tx ([]byte)`: The request transaction bytes.
-- **Response**:
-  - `Code (uint32)`: Response code.
-  - `Data ([]byte)`: Result bytes, if any.
-  - `Log (string)`: The output of the application's logger. May
-    be non-deterministic.
-  - `Info (string)`: Additional information. May
-    be non-deterministic.
-  - `GasWanted (int64)`: Amount of gas requested for transaction.
-  - `GasUsed (int64)`: Amount of gas consumed by transaction.
-  - `Tags ([]cmn.KVPair)`: Key-Value tags for filtering and indexing
-    transactions (eg. by account).
-- **Usage**:
-  - Deliver a transaction to be executed in full by the application.
-    If the transaction is valid, returns CodeType.OK.
-  - Keys and values in Tags must be UTF-8 encoded strings (e.g.
-    "account.owner": "Bob", "balance": "100.0",
+- **请求**：
+  - `Tx ([]byte)`: 请求交易字节。
+- **响应**：
+  - `Code (uint32)`: 响应码。
+  - `Data ([]byte)`: 结果字节，如果有的话。
+  - `Log (string)`: 应用程序日志程序的输出。可能是不确定的。
+  - `Info (string)`: 附加信息。可能是不确定的。
+  - `GasWanted (int64)`: 交易所需的气体量。
+  - `GasUsed (int64)`: 交易消耗的气体量。
+  - `Tags ([]cmn.KVPair)`: 用于过滤和索引交易的键值标记(例如。通过账户)。
+- **用法**：
+  - 交付应用程序要完全执行的交易。如果交易有效，则返回 CodeType.OK。
+  - 标签中的键和值必须是 UTF-8 编码的字符串(例如："account.owner": "Bob", "balance": "100.0",
     "time": "2018-01-02T12:30:00Z")
 
 ### EndBlock
 
-- **Request**:
-  - `Height (int64)`: Height of the block just executed.
-- **Response**:
-  - `ValidatorUpdates ([]ValidatorUpdate)`: Changes to validator set (set
-    voting power to 0 to remove).
-  - `ConsensusParamUpdates (ConsensusParams)`: Changes to
-    consensus-critical time, size, and other parameters.
-  - `Tags ([]cmn.KVPair)`: Key-Value tags for filtering and indexing
-- **Usage**:
-  - Signals the end of a block.
-  - Called prior to each Commit, after all transactions.
-  - Validator updates returned for block H:
-    - apply to the NextValidatorsHash of block H+1
-    - apply to the ValidatorsHash (and thus the validator set) for block H+2
-    - apply to the RequestBeginBlock.LastCommitInfo (ie. the last validator set) for block H+3
-  - Consensus params returned for block H apply for block H+1
+- **请求**：
+  - `Height (int64)`: 刚刚执行的块的高度。
+- **响应**：
+  - `ValidatorUpdates ([]ValidatorUpdate)`: 验证者集的更改(将投票权设置为 0 以删除)。
+  - `ConsensusParamUpdates (ConsensusParams)`: 用于将 filterinChanges 更改为共识的关键时间、大小和其他参数的键值标记。g 和索引
+  - `Tags ([]cmn.KVPair)`: 用于过滤和索引的键值标记
+- **用法**：
+  - 表示一个块的结束。
+  - 在每次提交之前，在所有交易之后调用。
+  - 验证者更新为 H 块返回：
+    - 应用于 H+1 块的 NextValidatorsHash
+    - 应用于 H+2 块的ValidatorsHash(以及验证者集)
+    - 应用到块 H+3 的 RequestBeginBlock.LastCommitInfo(即最后验证者集)
+  -为 H 块返回的共识参数应用于 H+1 块
 
 ### Commit
 
-- **Response**:
-  - `Data ([]byte)`: The Merkle root hash
-- **Usage**:
-  - Persist the application state.
-  - Return a Merkle root hash of the application state.
-  - It's critical that all application instances return the
-    same hash. If not, they will not be able to agree on the next
-    block, because the hash is included in the next block!
+- **响应**：
+  - `Data ([]byte)`: 默克尔根哈希
+- **用法**：
+  - 保存应用程序状态。
+  - 返回应用程序状态的默克尔根哈希。
+  - 关键是所有应用程序实例返回相同的哈希。如果没有，他们将无法就下一个块达成一致，因为哈希包含在下一个块中!
 
-## Data Messages
+## 数据消息
 
 ### Header
 
-- **Fields**:
-  - `ChainID (string)`: ID of the blockchain
-  - `Height (int64)`: Height of the block in the chain
-  - `Time (google.protobuf.Timestamp)`: Time of the block. It is the proposer's
-    local time when block was created.
-  - `NumTxs (int32)`: Number of transactions in the block
-  - `TotalTxs (int64)`: Total number of transactions in the blockchain until
-    now
-  - `LastBlockID (BlockID)`: Hash of the previous (parent) block
-  - `LastCommitHash ([]byte)`: Hash of the previous block's commit
-  - `ValidatorsHash ([]byte)`: Hash of the validator set for this block
-  - `NextValidatorsHash ([]byte)`: Hash of the validator set for the next block
-  - `ConsensusHash ([]byte)`: Hash of the consensus parameters for this block
-  - `AppHash ([]byte)`: Data returned by the last call to `Commit` - typically the
-    Merkle root of the application state after executing the previous block's
-    transactions
-  - `LastResultsHash ([]byte)`: Hash of the ABCI results returned by the last block
-  - `EvidenceHash ([]byte)`: Hash of the evidence included in this block
-  - `ProposerAddress ([]byte)`: Original proposer for the block
-- **Usage**:
-  - Provided in RequestBeginBlock
-  - Provides important context about the current state of the blockchain -
-    especially height and time.
-  - Provides the proposer of the current block, for use in proposer-based
-    reward mechanisms.
+- **字段**：
+  - `ChainID (string)`: 区块链 ID
+  - `Height (int64)`: 链中块的高度
+  - `Time (google.protobuf.Timestamp)`: 块时间。创建块时，它是提议者的本地时间。
+  - `NumTxs (int32)`: 块中的交易数
+  - `TotalTxs (int64)`: 到目前为止，区块链中的交易总数
+  - `LastBlockID (BlockID)`: 前一个(父)块的哈希
+  - `LastCommitHash ([]byte)`: 前一个块提交的哈希值
+  - `ValidatorsHash ([]byte)`: 此块的验证者集的哈希值
+  - `NextValidatorsHash ([]byte)`: 下一个块的验证者集的哈希值
+  - `ConsensusHash ([]byte)`: 此块的共识参数的哈希
+  - `AppHash ([]byte)`: 最后一次调用 `Commit` 返回的数据 - 通常是执行前一个块的交易后应用程序状态的默克尔根
+  - `LastResultsHash ([]byte)`: 最后一个块返回的 ABCI 结果的哈希
+  - `EvidenceHash ([]byte)`: 块中包含的证据的哈希
+  - `ProposerAddress ([]byte)`: 原区块提案人
+- **用法**：
+  - 在 RequestBeginBlock 中提供
+  - 提供有关区块链当前状态的重要上下文 - 特别是高度和时间。
+  - 提供当前块的提案人，用于基于提案人的奖励机制。
 
 ### Validator
 
-- **Fields**:
-  - `Address ([]byte)`: Address of the validator (hash of the public key)
-  - `Power (int64)`: Voting power of the validator
-- **Usage**:
-  - Validator identified by address
-  - Used in RequestBeginBlock as part of VoteInfo
-  - Does not include PubKey to avoid sending potentially large quantum pubkeys
-    over the ABCI
+- **字段**：
+  - `Address ([]byte)`: 验证者的地址(公钥的哈希)
+  - `Power (int64)`: 验证者的投票权
+- **用法**：
+  - 验证者地址标识
+  - 在 RequestBeginBlock 中作为 VoteInfo 的一部分使用
+  - 不包括公共密钥，以避免发送潜在的大量子公共密钥通过 ABCI
 
 ### ValidatorUpdate
 
-- **Fields**:
-  - `PubKey (PubKey)`: Public key of the validator
-  - `Power (int64)`: Voting power of the validator
-- **Usage**:
-  - Validator identified by PubKey
-  - Used to tell Tendermint to update the validator set
+- **字段**：
+  - `PubKey (PubKey)`: 验证者的公钥
+  - `Power (int64)`: 验证者的投票权
+- **用法**：
+  - 验证者由公钥标识
+  - 用于通知 Tendermint 更新验证者集
 
 ### VoteInfo
 
-- **Fields**:
-  - `Validator (Validator)`: A validator
-  - `SignedLastBlock (bool)`: Indicates whether or not the validator signed
-    the last block
-- **Usage**:
-  - Indicates whether a validator signed the last block, allowing for rewards
-    based on validator availability
+- **字段**：
+  - `Validator (Validator)`: 验证者
+  - `SignedLastBlock (bool)`: 指示验证者是否对最后一个块签名
+- **用法**：
+  - 指示验证者是否在最后一个块上签名，允许基于验证者可用性进行奖励
 
 ### PubKey
 
-- **Fields**:
-  - `Type (string)`: Type of the public key. A simple string like `"ed25519"`.
-    In the future, may indicate a serialization algorithm to parse the `Data`,
-    for instance `"amino"`.
-  - `Data ([]byte)`: Public key data. For a simple public key, it's just the
-    raw bytes. If the `Type` indicates an encoding algorithm, this is the
-    encoded public key.
-- **Usage**:
-  - A generic and extensible typed public key
+- **字段**：
+  - `Type (string)`: 公钥的类型。一个简单的字符串，如 `"ed25519"`。将来，可能会指定一个序列化算法来解析 `Data`，例如 `"amino"`。
+  - `Data ([]byte)`: 公共密钥数据。对于一个简单的公钥，它只是原始字节。如果 `Type` 表示编码算法，则这是编码的公钥。
+- **用法**：
+  - 一个通用的、可扩展的类型化公钥
 
 ### Evidence
 
-- **Fields**:
-  - `Type (string)`: Type of the evidence. A hierarchical path like
-    "duplicate/vote".
-  - `Validator (Validator`: The offending validator
-  - `Height (int64)`: Height when the offense was committed
-  - `Time (google.protobuf.Timestamp)`: Time of the block at height `Height`.
-    It is the proposer's local time when block was created.
-  - `TotalVotingPower (int64)`: Total voting power of the validator set at
-    height `Height`
+- **字段**：
+  - `Type (string)`: 证据的类型。类似于“重复/投票”的分层路径。
+  - `Validator (Validator)`: 验证者
+  - `Height (int64)`: 提交的高度
+  - `Time (google.protobuf.Timestamp)`: 在高度 `Height`的块时间。创建块时，它是提议者的本地时间。
+  - `TotalVotingPower (int64)`: 在高度 `Height` 的验证者集的总投票权
 
 ### LastCommitInfo
 
-- **Fields**:
-  - `Round (int32)`: Commit round.
-  - `Votes ([]VoteInfo)`: List of validators addresses in the last validator set
-    with their voting power and whether or not they signed a vote.
+- **字段**：
+  - `Round (int32)`: 提交轮。
+  - `Votes ([]VoteInfo)`: 验证者地址列表，包括最后一个验证者集中的地址及其投票权，以及它们是否签署了投票。
