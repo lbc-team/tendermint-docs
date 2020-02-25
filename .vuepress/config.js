@@ -32,7 +32,8 @@ module.exports = {
         children: [
           "/introduction/quick-start",
           "/introduction/install",
-          "/introduction/what-is-tendermint"
+          "/introduction/what-is-tendermint",
+          "/introduction/architecture"
         ]
       },
       {

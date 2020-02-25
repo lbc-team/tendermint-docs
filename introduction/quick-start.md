@@ -2,40 +2,38 @@
 
 ## 概述
 
-This is a quick start guide. If you have a vague idea about how Tendermint
-works and want to get started right away, continue.
+本文是快速入门指南。如果您对Tendermint了解尚不清晰，但想立即运行起来，请继续阅读。
 
 ## 安装
 
 ### 快速安装
 
-To quickly get Tendermint installed on a fresh
-Ubuntu 16.04 machine, use [this script](https://git.io/fFfOR).
+在全新的Ubuntu 16.04电脑上安装Tendermint，请使用[脚本](https://git.io/fFfOR)。
 
-WARNING: do not run this on your local machine.
+警告：不要在本地电脑运行此脚本。
 
 ```
 curl -L https://git.io/fFfOR | bash
 source ~/.profile
 ```
 
-The script is also used to facilitate cluster deployment below.
+本脚本同样有助于下文的集群部署。
 
 ### 手动安装
 
-For manual installation, see the [install instructions](install.md)
+手动安装方式，请参阅[安装Tendermint](install.md)。
 
 ## 初始化
 
-Running:
+运行
 
 ```
 tendermint init
 ```
 
-will create the required files for a single, local node.
+将为单个本地节点创建所需要的文件。
 
-These files are found in `$HOME/.tendermint`:
+这些文件可以在`$HOME/.tendermint`中找到：
 
 ```
 $ ls $HOME/.tendermint
@@ -47,25 +45,25 @@ $ ls $HOME/.tendermint/config/
 config.toml  genesis.json  node_key.json  priv_validator.json
 ```
 
-For a single, local node, no further configuration is required.
-Configuring a cluster is covered further below.
+对于单个本地节点，配置已完成。
+对于如何配置集群，后文会进一步介绍。
+
 
 ## 本地节点
 
-Start tendermint with a simple in-process application:
-
+使用一个进程内应用程序并启动Tendermint：
 ```
 tendermint node --proxy_app=kvstore
 ```
 
-and blocks will start to stream in:
+然后区块数据开始滚动显示：
 
 ```
 I[01-06|01:45:15.592] Executed block                               module=state height=1 validTxs=0 invalidTxs=0
 I[01-06|01:45:15.624] Committed state                              module=state height=1 txs=0 appHash=
 ```
 
-Check the status with:
+用以下命令查看运行状态：
 
 ```
 curl -s localhost:26657/status
@@ -73,50 +71,48 @@ curl -s localhost:26657/status
 
 ### 发送交易
 
-With the kvstore app running, we can send transactions:
+运行kvstore应用后，我们可以发送交易
 
 ```
 curl -s 'localhost:26657/broadcast_tx_commit?tx="abcd"'
 ```
 
-and check that it worked with:
+并发现交易已通过
 
 ```
 curl -s 'localhost:26657/abci_query?data="abcd"'
 ```
 
-We can send transactions with a key and value too:
+我们也可以发送由k-v组成的交易：
 
 ```
 curl -s 'localhost:26657/broadcast_tx_commit?tx="name=satoshi"'
 ```
 
-and query the key:
+然后查询键
 
 ```
 curl -s 'localhost:26657/abci_query?data="name"'
 ```
 
-where the value is returned in hex.
+获得以十六进制编码的值。
 
 ## 节点集群
 
-First create four Ubuntu cloud machines. The following was tested on Digital
-Ocean Ubuntu 16.04 x64 (3GB/1CPU, 20GB SSD). We'll refer to their respective IP
-addresses below as IP1, IP2, IP3, IP4.
+首先创建四个Ubuntu云主机。本测试在Digital Ocean Ubuntu 16.04 x64 (3GB/1CPU, 20GB SSD)上完成。下文中分别将地址记为IP1, IP2, IP3, IP4。
 
-Then, `ssh` into each machine, and execute [this script](https://git.io/fFfOR):
+然后，使用`ssh`进入每台主机并执行[脚本](https://git.io/fFfOR)：
 
 ```
 curl -L https://git.io/fFfOR | bash
 source ~/.profile
 ```
 
-This will install `go` and other dependencies, get the Tendermint source code, then compile the `tendermint` binary.
+本脚本将首先安装`go`和其他依赖文件，然后获取Tendermint源码，最终编译“Tendermint”二进制文件。
 
-Next, use the `tendermint testnet` command to create four directories of config files (found in `./mytestnet`) and copy each directory to the relevant machine in the cloud, so that each machine has `$HOME/mytestnet/node[0-3]` directory.
+接下来，使用`tendermint testnet`命令创建四个配置文件目录（位于`/mytestnet`），并将每个文件夹复制到对应的主机上，以便每台计算机都有`$HOME/mytestnet/node[0-3]`文件夹。
 
-Before you can start the network, you'll need peers identifiers (IPs are not enough and can change). We'll refer to them as ID1, ID2, ID3, ID4.
+在启动网络之前，还需要获取节点标识符（仅IP地址不够，且IP会发生变动）。我们称之为ID1，ID2，ID3，ID4。
 
 ```
 tendermint show_node_id --home ./mytestnet/node0
@@ -125,7 +121,7 @@ tendermint show_node_id --home ./mytestnet/node2
 tendermint show_node_id --home ./mytestnet/node3
 ```
 
-Finally, from each machine, run:
+最后，在每一个节点上运行：
 
 ```
 tendermint node --home ./mytestnet/node0 --proxy_app=kvstore --p2p.persistent_peers="ID1@IP1:26656,ID2@IP2:26656,ID3@IP3:26656,ID4@IP4:26656"
@@ -134,8 +130,7 @@ tendermint node --home ./mytestnet/node2 --proxy_app=kvstore --p2p.persistent_pe
 tendermint node --home ./mytestnet/node3 --proxy_app=kvstore --p2p.persistent_peers="ID1@IP1:26656,ID2@IP2:26656,ID3@IP3:26656,ID4@IP4:26656"
 ```
 
-Note that after the third node is started, blocks will start to stream in
-because >2/3 of validators (defined in the `genesis.json`) have come online.
-Persistent peers can also be specified in the `config.toml`. See [here](../tendermint-core/configuration.md) for more information about configuration options.
+注意，在第三个节点启动后，由于超过2/3验证节点(在`genesis.json`中定义)已运行，区块信息开始滚动刷新。
+持久化节点可以在`config.toml`中指定，有关配置选项的详细信息，请参见[此处](../tendermint-core/configuration.md)。
 
-Transactions can then be sent as covered in the single, local node example above.
+相关交易操作可参见前文本地节点示例所述。
