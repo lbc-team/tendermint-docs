@@ -1,328 +1,203 @@
 # 什么是Tendermint?
 
-Tendermint is software for securely and consistently replicating an
-application on many machines. By securely, we mean that Tendermint works
-even if up to 1/3 of machines fail in arbitrary ways. By consistently,
-we mean that every non-faulty machine sees the same transaction log and
-computes the same state. Secure and consistent replication is a
-fundamental problem in distributed systems; it plays a critical role in
-the fault tolerance of a broad range of applications, from currencies,
-to elections, to infrastructure orchestration, and beyond.
+Tenermint是个能够在多机器上安全一致地复制应用的软件。
+安全是指无论多达1/3的机器出现何种类型的故障，Tendermint都可以正常工作。
+一致是指每个正确运行的机器都可以获取完全相同的交易日志并计算相同的状态。
+在分布式系统中，安全一致地复制至关重要；从货币到选举再到基础设施管理等广泛应用容错方面，它都有着着重要作用。
 
-The ability to tolerate machines failing in arbitrary ways, including
-becoming malicious, is known as Byzantine fault tolerance (BFT). The
-theory of BFT is decades old, but software implementations have only
-became popular recently, due largely to the success of "blockchain
-technology" like Bitcoin and Ethereum. Blockchain technology is just a
-reformalization of BFT in a more modern setting, with emphasis on
-peer-to-peer networking and cryptographic authentication. The name
-derives from the way transactions are batched in blocks, where each
-block contains a cryptographic hash of the previous one, forming a
-chain. In practice, the blockchain data structure actually optimizes BFT
-design.
+拜占庭容错（BFT）指的是系统能够容忍机器以任意方式出现故障，包括机器故意危害系统的方式。
+拜占庭容错理论已有几十年的历史，但最近由于比特币和以太坊等“区块链技术”的成功，其软件实现才逐渐流行。
+区块链技术是在更现代的环境下对BFT的一种改造，重点引入了点对点网络和密码认证等技术。
+区块链的名称来源于交易的处理方式，交易被打包在每一个区块中，每一个区块存储前一个区块的哈希值，形成了一个链的结构。
+实际上，区块链数据结构优化了BFT设计。
 
-Tendermint consists of two chief technical components: a blockchain
-consensus engine and a generic application interface. The consensus
-engine, called Tendermint Core, ensures that the same transactions are
-recorded on every machine in the same order. The application interface,
-called the Application BlockChain Interface (ABCI), enables the
-transactions to be processed in any programming language. Unlike other
-blockchain and consensus solutions, which come pre-packaged with built
-in state machines (like a fancy key-value store, or a quirky scripting
-language), developers can use Tendermint for BFT state machine
-replication of applications written in whatever programming language and
-development environment is right for them.
+Tendermint包括两个主要技术组件：区块链共识引擎和通用应用程序接口。
+共识引擎，被称作Tendermint Core，保证所有的机器按照相同的顺序记录相同的交易。
+应用程序接口，被称为应用程序区块链接口ABCI，实现任意编程语言处理交易的功能。
+其他区块链和共识解决方案通常预置内部状态机，比如使用键值存储不常见的脚本语言来完成功能，
+而Tendermint支持开发者用任意编程语言实现拜占庭容错的状态机复制功能，并且开发环境也非常友好。
 
-Tendermint is designed to be easy-to-use, simple-to-understand, highly
-performant, and useful for a wide variety of distributed applications.
+Tendermint的目标是易使用、便理解、高性能并适用各种分布式应用场景。
 
 ## Tendermint 和其他技术对比
 
-Tendermint is broadly similar to two classes of software. The first
-class consists of distributed key-value stores, like Zookeeper, etcd,
-and consul, which use non-BFT consensus. The second class is known as
-"blockchain technology", and consists of both cryptocurrencies like
-Bitcoin and Ethereum, and alternative distributed ledger designs like
-Hyperledger's Burrow.
+Tendermint大体上类似于两类软件。
+第一类是非BFT一致性的分布式键值存储系统，包括Zookeeper、etcd和consul。
+第二类是“区块链技术”，包括比特币和以太坊等加密货币和Hyperledger Burrow等分布式账本。
 
 ### Zookeeper, etcd, consul
 
-Zookeeper, etcd, and consul are all implementations of a key-value store
-atop a classical, non-BFT consensus algorithm. Zookeeper uses a version
-of Paxos called Zookeeper Atomic Broadcast, while etcd and consul use
-the Raft consensus algorithm, which is much younger and simpler. A
-typical cluster contains 3-5 machines, and can tolerate crash failures
-in up to 1/2 of the machines, but even a single Byzantine fault can
-destroy the system.
+Zookeeper、etcd和consul都基于经典非拜占庭容错一致性算法，实现了分布式键值存储。
+Zookeeper使用了Zookeeper Atomic Broadcast版本的的Paxos共识算法，而etcd和consul使用了更新更简单的Raft共识算法。
+一个典型的集群包含3-5台机器，并且可以容忍多达1/2台机器的故障，但是只要出现一个拜占庭错误机器，系统就会崩溃。
 
-Each offering provides a slightly different implementation of a
-featureful key-value store, but all are generally focused around
-providing basic services to distributed systems, such as dynamic
-configuration, service discovery, locking, leader-election, and so on.
+虽然这些软件都提供了各有特色的键值存储功能，但都关注为分布式系统提供基础服务，如动态配置、服务发现、锁定、领导人选举等。
 
-Tendermint is in essence similar software, but with two key differences:
+Tendermint虽然在本质上和以上软件类似，但是具有两点关键不同：
 
-- It is Byzantine Fault Tolerant, meaning it can only tolerate up to a
-  1/3 of failures, but those failures can include arbitrary behaviour -
-  including hacking and malicious attacks. - It does not specify a
-  particular application, like a fancy key-value store. Instead, it
-  focuses on arbitrary state machine replication, so developers can build
-  the application logic that's right for them, from key-value store to
-  cryptocurrency to e-voting platform and beyond.
+- 它实现了拜占庭容错。虽然只能够容忍系统1/3节点的故障，但是可以容忍任意类型的，包括黑客和恶意攻击的错误。
+
+- 它不像键值存储那样只指定一种特定的应用，而是侧重于任意状态机复制。因此从键值存储到加密货币，再到电子投票平台，开发人员可以构建适合他们的任意应用程序逻辑。
 
 ### Bitcoin, Ethereum, etc.
 
-Tendermint emerged in the tradition of cryptocurrencies like Bitcoin,
-Ethereum, etc. with the goal of providing a more efficient and secure
-consensus algorithm than Bitcoin's Proof of Work. In the early days,
-Tendermint had a simple currency built in, and to participate in
-consensus, users had to "bond" units of the currency into a security
-deposit which could be revoked if they misbehaved -this is what made
-Tendermint a Proof-of-Stake algorithm.
+Tendermint诞生于比特币、以太坊等传统加密货币，目标是提供比比特币的PoW算法更高效、更安全的共识算法。
+在早期，Tendermint内置了一种简单的货币，为了参与共识，用户必须将货币“绑定”到一个保证金中，
+如果他们行为不当，保证金可能会被撤销——这就是Tendermint成为PoS算法的原因。
 
-Since then, Tendermint has evolved to be a general purpose blockchain
-consensus engine that can host arbitrary application states. That means
-it can be used as a plug-and-play replacement for the consensus engines
-of other blockchain software. So one can take the current Ethereum code
-base, whether in Rust, or Go, or Haskell, and run it as a ABCI
-application using Tendermint consensus. Indeed, [we did that with
-Ethereum](https://github.com/cosmos/ethermint). And we plan to do
-the same for Bitcoin, ZCash, and various other deterministic
-applications as well.
+从那时起，Tendermint已经发展成为一个通用的区块链共识引擎，可以承载任意的应用程序状态。
+这表示它可以成为其他区块链软件的共识引擎的即插即用替代品。
+因此，当前的以太坊代码库，无论是Rust、Go还是Haskell，都可以作为一个ABCI应用程序运行在Tendermint共识引擎之上。
+事实上，[我们已经实现了以太坊](https://github.com/cosmos/ethermint)。我们接下来准备对比特币、ZCash和其他各种确定性应用完成类似的开发实现。
 
-Another example of a cryptocurrency application built on Tendermint is
-[the Cosmos network](http://cosmos.network).
+目前，另外一个已实现的基于Tendermint的虚拟货币应用程序是[Cosmos 网络](http://cosmos.network)。
 
-### Other Blockchain Projects
+### 其他区块链项目
 
-[Fabric](https://github.com/hyperledger/fabric) takes a similar approach
-to Tendermint, but is more opinionated about how the state is managed,
-and requires that all application behaviour runs in potentially many
-docker containers, modules it calls "chaincode". It uses an
-implementation of [PBFT](http://pmg.csail.mit.edu/papers/osdi99.pdf).
-from a team at IBM that is [augmented to handle potentially
-non-deterministic
-chaincode](https://www.zurich.ibm.com/~cca/papers/sieve.pdf) It is
-possible to implement this docker-based behaviour as a ABCI app in
-Tendermint, though extending Tendermint to handle non-determinism
-remains for future work.
+[Fabric](https://github.com/hyperledger/fabric)采用了与Tendermint类似的方法，但更关注状态管理，要求所有应用程序行为在docker容器（称为“链码”的模块）中运行。它使用来自IBM（[augmented to handle potentially non-deterministic chaincode](https://www.zurich.ibm.com/~cca/papers/sieve.pdf)）实现的[PBFT](http://pmg.csail.mit.edu/papers/osdi99.pdf)作为共识算法。将这种基于docker的行为实现为一个ABCI程序，并在Tendermint中是可行的，不过扩展Tendermint处理这件事并不确定，有待未来的工作。
 
-[Burrow](https://github.com/hyperledger/burrow) is an implementation of
-the Ethereum Virtual Machine and Ethereum transaction mechanics, with
-additional features for a name-registry, permissions, and native
-contracts, and an alternative blockchain API. It uses Tendermint as its
-consensus engine, and provides a particular application state.
+[Burrow](https://github.com/hyperledger/burrow)是以太坊虚拟机和以太坊交易机制的一种具体实现，并额外增加了名称注册、权限管理和原生合约等功能，还提供了可替代的区块链API。它使用Tendermint作为共识引擎，并提供特定的应用状态。
 
 ## ABCI 概述
 
-The [Application BlockChain Interface
-(ABCI)](https://github.com/tendermint/tendermint/tree/develop/abci)
-allows for Byzantine Fault Tolerant replication of applications
-written in any programming language.
+[应用程序区块链接口（ABCI）](https://github.com/tendermint/tendermint/tree/master/abci)
+允许用任何编程语言实现应用程序拜占庭容错复制。
 
-### Motivation
+### 开发动机
 
-Thus far, all blockchains "stacks" (such as
-[Bitcoin](https://github.com/bitcoin/bitcoin)) have had a monolithic
-design. That is, each blockchain stack is a single program that handles
-all the concerns of a decentralized ledger; this includes P2P
-connectivity, the "mempool" broadcasting of transactions, consensus on
-the most recent block, account balances, Turing-complete contracts,
-user-level permissions, etc.
+目前为止，所有的区块链“技术栈”（如[比特币](https://github.com/bitcoin/bitcoin)）都是作为一个紧耦合的整体进行设计的。
+换句话说，每一个区块链技术栈都是一个单独的程序，处理分布式账本的所有问题。
+这些问题包括P2P连接、交易内存池广播、最新区块共识、账户余额、图灵完备合约、用户级权限管理等。
 
-Using a monolithic architecture is typically bad practice in computer
-science. It makes it difficult to reuse components of the code, and
-attempts to do so result in complex maintenance procedures for forks of
-the codebase. This is especially true when the codebase is not modular
-in design and suffers from "spaghetti code".
+在计算机科学中，过高耦合度的程序架构通常不是好做法。
+因为耦合度高会导致程序难以复用，并且这样做易导致代码库分叉进而维护困难。
+当开发者没有对代码库进行模块化设计并遭受“意大利面代码”的困扰时，这种设计方式导致的问题更加明显。
 
-Another problem with monolithic design is that it limits you to the
-language of the blockchain stack (or vice versa). In the case of
-Ethereum which supports a Turing-complete bytecode virtual-machine, it
-limits you to languages that compile down to that bytecode; today, those
-are Serpent and Solidity.
+高耦合度设计导致的另一个问题是所使用的开发语言受限于区块链技术栈（反之亦然）。
+在以太坊中，它提供一个图灵完备的字节码合约虚拟机，这就把开发者限制在了对应的合约语言上；
+目前，这个合约语言是Serpent和Solidity。
 
-In contrast, our approach is to decouple the consensus engine and P2P
-layers from the details of the application state of the particular
-blockchain application. We do this by abstracting away the details of
-the application to an interface, which is implemented as a socket
-protocol.
+相比之下，Tendermint分离了共识引擎和P2P层与特定区块链程序的应用状态细节。
+Tendermint将应用程序的状态管理细节抽象到一个接口，并将该接口以socket协议的形式实现了出来。
 
-Thus we have an interface, the Application BlockChain Interface (ABCI),
-and its primary implementation, the Tendermint Socket Protocol (TSP, or
-Teaspoon).
+所以，Tendermint拥有接口规范，即应用程序区块链接口（ABCI），并有了一个主要实现Tendermint socket协议（也叫TSP或Teaspoon）。
 
-### Intro to ABCI
+### ABCI介绍
 
-[Tendermint Core](https://github.com/tendermint/tendermint) (the
-"consensus engine") communicates with the application via a socket
-protocol that satisfies the ABCI.
+[Tendermint核心](https://github.com/tendermint/tendermint)（“共识引擎”）
+通过使用满足ABCI规范的socket协议与应用程序通信。
 
-To draw an analogy, lets talk about a well-known cryptocurrency,
-Bitcoin. Bitcoin is a cryptocurrency blockchain where each node
-maintains a fully audited Unspent Transaction Output (UTXO) database. If
-one wanted to create a Bitcoin-like system on top of ABCI, Tendermint
-Core would be responsible for
+以广为人知的加密货币比特币为例。
+比特币是一个加密货币区块链，每个节点都维护一个经过完全验证的未支出交易输出（UTXO）数据库。
+如果有人想在ABCI上创建一个类似比特币的系统，Tendermint Core将会实现
 
-- Sharing blocks and transactions between nodes
-- Establishing a canonical/immutable order of transactions
-  (the blockchain)
+- 在节点之间共享区块和交易
+- 建立交易标准/不可更改的顺序（即区块链）
 
-The application will be responsible for
+应用程序将会实现
 
-- Maintaining the UTXO database
-- Validating cryptographic signatures of transactions
-- Preventing transactions from spending non-existent transactions
-- Allowing clients to query the UTXO database.
+- 维护UTXO数据库
+- 验证交易签名
+- 防止使用未产生的交易
+- 允许客户端查询UTXO数据库
 
-Tendermint is able to decompose the blockchain design by offering a very
-simple API (ie. the ABCI) between the application process and consensus
-process.
+Tendermint通过在应用程序进程和共识进程之间提供非常简单的API（即ABCI）来分解区块链设计。
 
-The ABCI consists of 3 primary message types that get delivered from the
-core to the application. The application replies with corresponding
-response messages.
+ABCI由3种主要消息类型组成，它们从Tendermint核心传递到应用程序，应用程序用相应的响应消息进行回复。
 
-The messages are specified here: [ABCI Message
-Types](https://github.com/tendermint/tendermint/blob/develop/abci/README.md#message-types).
+消息规范可查看：[ABCI消息类型](https://github.com/tendermint/tendermint/blob/master/abci/README.md#message-types)。
 
-The **DeliverTx** message is the work horse of the application. Each
-transaction in the blockchain is delivered with this message. The
-application needs to validate each transaction received with the
-**DeliverTx** message against the current state, application protocol,
-and the cryptographic credentials of the transaction. A validated
-transaction then needs to update the application state — by binding a
-value into a key values store, or by updating the UTXO database, for
-instance.
+**DeliverTx**消息是应用程序的核心部分。
+区块链中的每笔交易都会随此消息一起发送。
+应用程序需要根据当前状态、应用程序协议和交易的加密证书验证随**DeliverTx**发送的每笔交易。
+然后，经过验证的交易需要更新应用程序状态—例如，将值绑定到kv数据库中，或者更新UTXO数据库。
 
-The **CheckTx** message is similar to **DeliverTx**, but it's only for
-validating transactions. Tendermint Core's mempool first checks the
-validity of a transaction with **CheckTx**, and only relays valid
-transactions to its peers. For instance, an application may check an
-incrementing sequence number in the transaction and return an error upon
-**CheckTx** if the sequence number is old. Alternatively, they might use
-a capabilities based system that requires capabilities to be renewed
-with every transaction.
+**CheckTx**消息类似于**DeliverTx**，但它仅用于验证交易。
+Tendermint Core的内存池首先使用**CheckTx**检查交易的有效性，然后只将有效交易转发给其他节点。
+比如，应用程序可以检查交易中递增的序号，如果序号不是最新的，**CheckTx**就会返回错误。
+或者，他们可以使用基于容量的系统，该系统要求对每笔交易都更新容量。
 
-The **Commit** message is used to compute a cryptographic commitment to
-the current application state, to be placed into the next block header.
-This has some handy properties. Inconsistencies in updating that state
-will now appear as blockchain forks which catches a whole class of
-programming errors. This also simplifies the development of secure
-lightweight clients, as Merkle-hash proofs can be verified by checking
-against the block hash, and that the block hash is signed by a quorum.
+**Commit**消息用于计算当前应用状态的加密承诺，并将其放入下一个区块头中。
+这有一些方便的特性。
+更新状态过程中如果出现不一致问题时会被认为区块链产生了分叉，这样就能捕获一整类的编程错误。
+这也简化了安全轻量级客户端的开发，因为区块哈希由大多数节点进行签名，
+通过检查该哈希值，就可以很方便的验证Merkle-hash的正确性。
 
-There can be multiple ABCI socket connections to an application.
-Tendermint Core creates three ABCI connections to the application; one
-for the validation of transactions when broadcasting in the mempool, one
-for the consensus engine to run block proposals, and one more for
-querying the application state.
+一个应用程序可以有多个ABCI socket连接。
+Tendermint Core创建三个到应用程序的ABCI连接：
+一个用于内存池广播时验证交易，
+一个用于共识引擎运行区块提案，
+最后一个用于查询应用状态。
 
-It's probably evident that applications designers need to very carefully
-design their message handlers to create a blockchain that does anything
-useful but this architecture provides a place to start. The diagram
-below illustrates the flow of messages via ABCI.
+很明显，在创建一个可以解决问题的区块链时，开发人员必须非常谨慎地设计消息处理程序，本架构提供了一个范式来减轻开发人员的负担。
+下图展示了通过ABCI的消息流：
 
 ![](../imgs/abci.png)
 
-## A Note on Determinism
+## 对确定性的解释
 
-The logic for blockchain transaction processing must be deterministic.
-If the application logic weren't deterministic, consensus would not be
-reached among the Tendermint Core replica nodes.
+区块链交易的处理逻辑必须是确定性的。
+否则，Tendermint核心节点之间就不会达成共识。
 
-Solidity on Ethereum is a great language of choice for blockchain
-applications because, among other reasons, it is a completely
-deterministic programming language. However, it's also possible to
-create deterministic applications using existing popular languages like
-Java, C++, Python, or Go. Game programmers and blockchain developers are
-already familiar with creating deterministic programs by avoiding
-sources of non-determinism such as:
+以太坊上的Solidity是区块链应用程序的非常好的选择，是由于它是一种完全确定性的编程语言。
+但是，对于现有的流行语言如java、C++、Python或GO，开发人员也能够创建确定性应用程序。
+游戏程序员和区块链开发人员在创建确定性程序过程中，已经了解如何避免一些非确定性情况，如：
 
-- random number generators (without deterministic seeding)
-- race conditions on threads (or avoiding threads altogether)
-- the system clock
-- uninitialized memory (in unsafe programming languages like C
-  or C++)
-- [floating point
-  arithmetic](http://gafferongames.com/networking-for-game-programmers/floating-point-determinism/)
-- language features that are random (e.g. map iteration in Go)
+- 随机数生成器（不使用确定性种子）
+- 多线程之间竞争条件（或完全不使用多线程）
+- 系统时间
+- 未初始化的内存空间（如C或C++这样的内存不安全编程语言）
+- [浮点运算](http://gafferongames.com/networking-for-game-programmers/floating-point-determinism/)
+- 一些会产生随机性的语言特性（如go的map迭代）
 
-While programmers can avoid non-determinism by being careful, it is also
-possible to create a special linter or static analyzer for each language
-to check for determinism. In the future we may work with partners to
-create such tools.
+虽然程序员可以通过谨慎开发来防止产生随机的结果，但是也可以为每种语言创建一个特殊的linter或静态分析器来检查确定性。
+日后，我们可能会与合作伙伴一起开发这样的工具。
 
-## Consensus Overview
+## 共识概述
 
-Tendermint is an easy-to-understand, mostly asynchronous, BFT consensus
-protocol. The protocol follows a simple state machine that looks like
-this:
+Tendermint是一个易于理解的、主要是异步操作的BFT共识协议。协议遵循一个简单的状态机，如下所示：
 
 ![](../imgs/consensus_logic.png)
 
-Participants in the protocol are called **validators**; they take turns
-proposing blocks of transactions and voting on them. Blocks are
-committed in a chain, with one block at each **height**. A block may
-fail to be committed, in which case the protocol moves to the next
-**round**, and a new validator gets to propose a block for that height.
-Two stages of voting are required to successfully commit a block; we
-call them **pre-vote** and **pre-commit**. A block is committed when
-more than 2/3 of validators pre-commit for the same block in the same
-round.
+协议的参与者称为**validators（验证者）**；他们轮流提出区块并对其进行投票。
+在链中提交的每一个区块都有一个**height（高度）**。
+当一个区块提交失败时，协议将进入到下一**round（轮）**，新的验证者将为该高度提出一个新的区块。
+成功提交一个块需要两个阶段的投票，分别是**pre-vote（预投票）**和**pre-commit（预提交）**。
+当超过2/3的验证者在同一轮中预提交同一个区块时，区块就会被提交到区块链中。
 
-There is a picture of a couple doing the polka because validators are
-doing something like a polka dance. When more than two-thirds of the
-validators pre-vote for the same block, we call that a **polka**. Every
-pre-commit must be justified by a polka in the same round.
+图中一对夫妇在跳波尔卡舞，因为验证者做的工作就像跳波尔卡舞。
+当超过三分之二的验证者对同一个区块进行了**pre-vote（预投票）**，我们称之为**polka（波尔卡）**。
+每一个**pre-commit（预提交）**都必须由同一轮的波尔卡来证明。
 
-Validators may fail to commit a block for a number of reasons; the
-current proposer may be offline, or the network may be slow. Tendermint
-allows them to establish that a validator should be skipped. Validators
-wait a small amount of time to receive a complete proposal block from
-the proposer before voting to move to the next round. This reliance on a
-timeout is what makes Tendermint a weakly synchronous protocol, rather
-than an asynchronous one. However, the rest of the protocol is
-asynchronous, and validators only make progress after hearing from more
-than two-thirds of the validator set. A simplifying element of
-Tendermint is that it uses the same mechanism to commit a block as it
-does to skip to the next round.
+验证者可能由于多种原因未能提交区块：
+当前的区块提交者可能离线，或者网络可能拥堵。
+Tendermint允许他们确认应当跳过这个验证者。
+在投票进入下一轮之前，验证者们会等待一小段时间从提交者处收到完整的区块。
+由于依赖超时，Tendermint成为弱同步协议，而不是异步协议。
+不过协议的其余部分是异步的，只有在收到超过三分之二验证者集合的消息后，验证者才会进行下一步工作。
+Tendermint一个可以被简化的地方在于，和跳到下一轮投票一样，它使用了同样的机制进行提交区块处理。
 
-Assuming less than one-third of the validators are Byzantine, Tendermint
-guarantees that safety will never be violated - that is, validators will
-never commit conflicting blocks at the same height. To do this it
-introduces a few **locking** rules which modulate which paths can be
-followed in the flow diagram. Once a validator precommits a block, it is
-locked on that block. Then,
+只要不到是拜占庭验证节点数目少于1/3，那么Tendermint保证永远不会违背安全性，
+也就是说，验证者永远不会在同一高度提交冲突的区块。
+为此，它引入了一些**locking（锁定）**规则，这些规则对流程图中的路径进行了模块化。
+一旦验证者预提交一个块，它就锁定在该块上。那么，
 
-1.  it must prevote for the block it is locked on
-2.  it can only unlock, and precommit for a new block, if there is a
-    polka for that block in a later round
+1. 验证者一定为锁定到的区块预投票
+2. 只有在之后轮次中出现针对那个区块的波尔卡，它才可以解锁并预通过新区块
 
-## Stake
+## 股权
 
-In many systems, not all validators will have the same "weight" in the
-consensus protocol. Thus, we are not so much interested in one-third or
-two-thirds of the validators, but in those proportions of the total
-voting power, which may not be uniformly distributed across individual
-validators.
+在许多系统中，验证者在共识协议中可能具有不同的投票“权重”。 
+因此，Tendermint并不关注验证者数目的三分之一或三分之二，
+而是关注总投票权的比例。此外，这个比例可能不是在各个验证者中均匀分布的。
 
-Since Tendermint can replicate arbitrary applications, it is possible to
-define a currency, and denominate the voting power in that currency.
-When voting power is denominated in a native currency, the system is
-often referred to as Proof-of-Stake. Validators can be forced, by logic
-in the application, to "bond" their currency holdings in a security
-deposit that can be destroyed if they're found to misbehave in the
-consensus protocol. This adds an economic element to the security of the
-protocol, allowing one to quantify the cost of violating the assumption
-that less than one-third of voting power is Byzantine.
+由于Tendermint可以复制任意应用程序，因此可以定义一种货币，并以该货币表示投票权。 
+当投票权使用系统内置货币计量时，该系统通常称为PoS。 
+通过规定程序的处理逻辑，验证者持有的货币可以绑定到保证金中，并且如果发现它们在共识协议中行为不当，则可以将其销毁。 
+这为协议的安全性增加了一个经济因素，当拜占庭节点小于三分之一的假设被打破时，人们可以量化产生的代价。
 
-The [Cosmos Network](https://cosmos.network) is designed to use this
-Proof-of-Stake mechanism across an array of cryptocurrencies implemented
-as ABCI applications.
+[Cosmos网络](https://cosmos.network)旨在在基于ABCI实现的一系列加密货币体系间，使用Pos机制完成共识。
 
-The following diagram is Tendermint in a (technical) nutshell. [See here
-for high resolution
-version](https://github.com/mobfoundry/hackatom/blob/master/tminfo.pdf).
+下图是一个简版的Tendermint（技术）原理图。[更高清版本请参看此处](https://github.com/mobfoundry/hackatom/blob/master/tminfo.pdf)。
 
 ![](../imgs/tm-transaction-flow.png)

@@ -1,20 +1,18 @@
-# 安装 Tendermint
-
-The fastest and easiest way to install the `tendermint` binary
-is to run [this script](https://github.com/tendermint/tendermint/blob/develop/scripts/install/install_tendermint_ubuntu.sh) on
-a fresh Ubuntu instance,
-or [this script](https://github.com/tendermint/tendermint/blob/develop/scripts/install/install_tendermint_bsd.sh)
-on a fresh FreeBSD instance. Read the comments / instructions carefully (i.e., reset your terminal after running the script,
-make sure you are okay with the network connections being made).
+# 安装Tendermint
 
 ## 使用二进制安装
 
-To download pre-built binaries, see the [releases page](https://github.com/tendermint/tendermint/releases).
+要下载预编译二进制文件，请参见[发布页](https://github.com/tendermint/tendermint/releases)。
 
 ## 从源码安装
 
-You'll need `go` [installed](https://golang.org/doc/install) and the required
-[environment variables set](https://github.com/tendermint/tendermint/wiki/Setting-GOPATH)
+您需要安装`go`并配置相关环境变量。以下指令可以完成配置：
+
+```bash
+echo export GOPATH=\"\$HOME/go\" >> ~/.bash_profile
+echo export PATH=\"\$PATH:\$GOPATH/bin\" >> ~/.bash_profile
+echo export GO111MODULE=on >> ~/.bash_profile
+```
 
 ### 获取源码
 
@@ -28,29 +26,36 @@ cd tendermint
 ### 安装工具及依赖
 
 ```
-make get_tools
-make get_vendor_deps
+make tools
 ```
 
 ### 编译
+
+执行
 
 ```
 make install
 ```
 
-to put the binary in `$GOPATH/bin` or use:
+将二进制文件生成并安装到`$GOPATH/bin`，或执行
 
 ```
 make build
 ```
 
-to put the binary in `./build`.
+将二进制文件生成并存入`./build`。
 
-The latest `tendermint version` is now installed.
+_声明_ 以上Tendermint的二进制文件是在没有DWARF符号表的情况下生成/安装的。如果要使用DWARF符号和调试信息生成/安装tendermint，请打开makefile文件，删除`build_FLAGS`中的`-s -w`。
+
+现在安装了最新的Tendermint，您可以通过运行以下命令进行验证：
+
+```
+tendermint version
+```
 
 ## 运行
 
-To start a one-node blockchain with a simple in-process application:
+要使用进程内应用程序启动单节点区块链，请执行以下操作：
 
 ```
 tendermint init
@@ -59,29 +64,26 @@ tendermint node --proxy_app=kvstore
 
 ## 重新安装
 
-If you already have Tendermint installed, and you make updates, simply
+如果您已经安装了Tendermint，并且进行了更新，只需执行
 
 ```
 cd $GOPATH/src/github.com/tendermint/tendermint
 make install
 ```
 
-To upgrade, run
+若要升级程序，只需执行
 
 ```
 cd $GOPATH/src/github.com/tendermint/tendermint
 git pull origin master
-make get_vendor_deps
 make install
 ```
 
-## Compile with CLevelDB support
+## 编译CLevelDB支持
 
-Install [LevelDB](https://github.com/google/leveldb) (minimum version is 1.7).
+首先安装[LevelDB](https://github.com/google/leveldb) (最低支持版本为1.7)。
 
-### Ubuntu
-
-Install LevelDB with snappy (optionally):
+也可以选择快速安装LevelDB(可选方式). 以下为Ubuntu指令:
 
 ```
 sudo apt-get update
@@ -100,23 +102,25 @@ wget https://github.com/google/leveldb/archive/v1.20.tar.gz && \
   rm -f v1.20.tar.gz
 ```
 
-Set database backend to cleveldb:
+然后，修改配置文件中数据库后端为`cleveldb`:
 
 ```
 # config/config.toml
 db_backend = "cleveldb"
 ```
 
-To install Tendermint, run
+执行
 
 ```
 CGO_LDFLAGS="-lsnappy" make install_c
 ```
 
-or run
+可安装Tendermint，
+
+执行
 
 ```
 CGO_LDFLAGS="-lsnappy" make build_c
 ```
 
-to put the binary in `./build`.
+可生成文件到`./build`
