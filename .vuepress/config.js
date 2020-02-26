@@ -21,7 +21,7 @@ module.exports = {
     },
     nav: [
       { text: "首页", link: "https://learnblockchain.cn" },
-      { text: "区块链文档中心", link: "https://learnblockchain.cn/docs/" },
+      { text: "区块链文档中心", link: "https://learnblockchain.cn/site/docs/" },
       { text: "En", link: "https://tendermint.com/docs/" },
       { text: "RPC", link: "https://tendermint.com/rpc/" }
     ],

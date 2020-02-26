@@ -7,7 +7,7 @@
 | 文件              | 状态 |   译者   |  校队  | 日期 |
 | ----------------- | ---- | ------- | ------ | ---- |
 | readme.md         | 完成 | Tiny熊   | Tiny熊 | 6/26 |
-| introduction/*    | 认领 | Tiny熊   |        |      |
+| introduction/*    | 认领 |   WZ    |  Tiny熊 |   2020/02/26    |
 | tendermint-core/* | 认领 | 小熊bill |        |      |
 | spec/*            | 认领 | 小熊bill |        |      |
 | networks/*        | 认领 | 小熊bill |        |      |

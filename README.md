@@ -57,4 +57,9 @@ Tendermint Core 使用拜占庭容错(BFT)共识算法及基于确定性有限�
 
 ## 版本
 
-中文版本基于 0.3.2 版本翻译
+中文版本基于 0.3.3 版本翻译
+
+## 译者
+* [白金颖](https://learnblockchain.cn/people/507)
+* [Tiny熊](https://learnblockchain.cn/people/15)
+* [WZ](https://learnblockchain.cn/people/493)
